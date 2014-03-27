@@ -1,9 +1,11 @@
 <?php namespace Inkwell\Routing
 {
+	use Closure;
 	use Dotink\Flourish;
 	use Inkwell\RouterInterface;
 	use Inkwell\RequestInterface;
 	use Inkwell\ResponseInterface;
+	use Inkwell\Event;
 
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
@@ -15,8 +17,10 @@
 	 *
 	 * @package Inkwell\Routing
 	 */
-	class Engine
+	class Engine implements EngineInterface, Event\EmitterInterface
 	{
+		use Event\Emitter;
+
 		/**
 		 *
 		 */
@@ -73,7 +77,7 @@
 		/**
 		 *
 		 */
-		public function anchor($path = NULL, $params = array(), $remainder_as_query = TRUE);
+		public function anchor($path = NULL, $params = array(), $remainder_as_query = TRUE)
 		{
 			switch (count(func_num_args)) {
 				case 0:
@@ -230,9 +234,12 @@
 		{
 			ob_start();
 
-			$this->emit('Router::actionBegin', $this->request);
+			$this->emit('Router::actionBegin', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 
-			$response = call_user_func($this->resolver, $this);
+			$response = call_user_func($this->resolver, $this->action);
 			$output   = ob_get_clean();
 
 			if ($output) {
@@ -244,9 +251,12 @@
 				$response = $this->response->resolve($response);
 			}
 
-			$this->emit('Router::actionComplete', $response);
-
 			$this->response = $response;
+
+			$this->emit('Router::actionComplete', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 		}
 
 

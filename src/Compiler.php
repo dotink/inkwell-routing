@@ -12,7 +12,7 @@
 	 *
 	 * @package Inkwell\Routing
 	 */
-	class Compiler
+	class Compiler implements CompilerInterface
 	{
 		const REGEX_TOKEN = '/\[[^\]]*\]/';
 		const WS_HOLDER   = '#WS#';

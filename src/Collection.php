@@ -12,7 +12,7 @@
 	 *
 	 * @package Inkwell\Routing
 	 */
-	class Collection
+	class Collection implements CollectionInterface
 	{
 		const DELIMITER = '#';
 
@@ -194,10 +194,11 @@
 
 				if (is_string($action)) {
 					$action = $compiler->make($action, $params, $remainder);
+					$params = $remainder;
 				}
 
 				$engine->setAction($action);
-				$engine->setParams($remainder);
+				$engine->setParams($params);
 
 				return TRUE;
 			}
