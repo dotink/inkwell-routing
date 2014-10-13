@@ -72,20 +72,22 @@
 		 */
 		public function anchor($path = NULL, $params = array(), $remainder_as_query = TRUE)
 		{
-			switch (count(func_num_args)) {
+			switch (count(func_num_args())) {
 				case 0:
-					$path = $this->getRequestPath();
-				case 2:
-					$params = $this->getParams();
+					$path   = $this->request->getUrl()->getPath();
+				case 1:
+					$params = $this->request->params->getAll();
 			}
 
 			$segments = explode('/', $this->compiler->make($path, $params, $remainder));
 			$anchor   = implode('/', array_map('rawurlencode', $segments));
+
+/*
 			$old      = [
-				'path'   => $this->getRequestPath(),
+				'path'   => $this->request->getUrl()->getPath(),
 				'params' => $this->getParams()
 			];
-
+*/
 			if ($remainder_as_query) {
 				$anchor .= '?' . http_build_query($remainder, '', '&', PHP_QUERY_RFC3986);
 			}
@@ -127,19 +129,37 @@
 			$this->request  = $request;
 			$this->resolver = $resolver;
 
-			$this->setRequestPath($request->getURL()->getPath());
 			$this->collection->reset($this->restless);
 
-			if ($status_code = $this->collection->rewrite($this->request, $this->compiler)) {
+			if ($status_code = $this->collection->rewrite($request, $this->compiler)) {
 				$this->redirect($this->anchor(), $status_code, FALSE);
 
 			} else {
+
+				$original_url = $request->getUrl();
+
 				do {
-					if (!$action = $this->collection->seek($this->request, $this->compiler)) {
+					$action = $this->collection->seek($request, $this->compiler);
+
+					if ($action === NULL) {
+
+						//
+						// No more actions left
+						//
+
+						break;
+					}
+
+					if ($action === FALSE) {
+
+						//
+						// Action did not match
+						//
+
 						continue;
 					}
 
-					if (!$this->request->getURL()->getPath() != $request->getURL()->getPath()) {
+					if ($original_url->getPath() != $request->getURL()->getPath()) {
 						$this->redirect($this->anchor(), 301, FALSE);
 						break;
 					}
@@ -147,6 +167,7 @@
 					try {
 						$this->prepareAction($action);
 						$this->captureResponse($action);
+						break;
 
 					} catch (Flourish\ContinueException $e) {
 						continue;
@@ -155,7 +176,7 @@
 						break;
 					}
 
-				} while ($result !== NULL);
+				} while (TRUE);
 			}
 
 
@@ -195,6 +216,8 @@
 		 */
 		protected function captureResponse()
 		{
+			$this->response->setStatusCode(200);
+
 			$this->emit('Router::actionBegin', [
 				'request'  => $this->request,
 				'response' => $this->response
@@ -202,14 +225,12 @@
 
 			ob_start();
 			$response = call_user_func($this->resolver, $this->action);
+			$output   = ob_get_clean();
 
-			if ($output = ob_get_clean() && $this->mutable) {
-				$this->response->setStatusCode(200);
-				$this->response->setBody($output);
-
-			} else {
-				$this->response->setBody($response);
-			}
+			$this->response->setBody(!($output && $this->mutable)
+				? $response
+				: $output
+			);
 
 			$this->emit('Router::actionComplete', [
 				'request'  => $this->request,
@@ -223,6 +244,8 @@
 		 */
 		protected function prepareAction($action)
 		{
+			$this->action = $action;
+
 			if (is_string($this->action)) {
 				if (strpos($this->action, '::') !== FALSE) {
 					$this->action = explode('::', $this->action);
