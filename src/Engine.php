@@ -3,8 +3,8 @@
 	use Closure;
 	use Dotink\Flourish;
 	use Inkwell\RouterInterface;
-	use Inkwell\RequestInterface;
-	use Inkwell\ResponseInterface;
+	use Inkwell\Transport\RequestInterface;
+	use Inkwell\Transport\ResponseInterface;
 	use Inkwell\Event;
 
 	/**
