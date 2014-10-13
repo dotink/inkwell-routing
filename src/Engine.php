@@ -50,13 +50,6 @@
 		 */
 		private $request = NULL;
 
-
-		/**
-		 *
-		 */
-		private $requestPath = NULL;
-
-
 		/**
 		 *
 		 */
@@ -87,49 +80,42 @@
 			}
 
 			$segments = explode('/', $this->compiler->make($path, $params, $remainder));
-			$request  = implode('/', array_map('rawurlencode', $segments));
+			$anchor   = implode('/', array_map('rawurlencode', $segments));
+			$old      = [
+				'path'   => $this->getRequestPath(),
+				'params' => $this->getParams()
+			];
 
 			if ($remainder_as_query) {
-				$request .= '?' . http_build_query($remainder, '', '&', PHP_QUERY_RFC3986);
+				$anchor .= '?' . http_build_query($remainder, '', '&', PHP_QUERY_RFC3986);
 			}
 
-			return $request;
+			return $anchor;
 		}
 
 
 		/**
 		 *
 		 */
-		public function checkRequestPath($path)
+		public function continue($message = NULL)
 		{
-			return $path == $this->requestPath;
+			throw new Flourish\ContinueException($message);
 		}
 
 
 		/**
 		 *
 		 */
-		public function isRestless()
+		public function redirect($location, $status_code = 303, $yield = TRUE)
 		{
-			return $this->restless;
-		}
+			$location = $this->request->getURL()->modify($location);
 
+			$this->response->setHeader('Location: ', $location);
+			$this->response->setStatusCode($status_code);
 
-		/**
-		 *
-		 */
-		public function getCollection()
-		{
-			return $this->collection;
-		}
-
-
-		/**
-		 *
-		 */
-		public function getRequestPath()
-		{
-			return $this->requestPath;
+			if ($yield) {
+				$this->yield();
+			}
 		}
 
 
@@ -142,70 +128,38 @@
 			$this->resolver = $resolver;
 
 			$this->setRequestPath($request->getURL()->getPath());
-			$this->collection->reset();
+			$this->collection->reset($this->restless);
 
-			if ($status = $this->collection->rewrite($this, $this->compiler)) {
-				$this->request->redirect($this->anchor(), $status);
+			if ($status_code = $this->collection->rewrite($this->request, $this->compiler)) {
+				$this->redirect($this->anchor(), $status_code, FALSE);
+
+			} else {
+				do {
+					if (!$action = $this->collection->seek($this->request, $this->compiler)) {
+						continue;
+					}
+
+					if (!$this->request->getURL()->getPath() != $request->getURL()->getPath()) {
+						$this->redirect($this->anchor(), 301, FALSE);
+						break;
+					}
+
+					try {
+						$this->prepareAction($action);
+						$this->captureResponse($action);
+
+					} catch (Flourish\ContinueException $e) {
+						continue;
+
+					} catch (Flourish\YieldException $e) {
+						break;
+					}
+
+				} while ($result !== NULL);
 			}
 
-			do {
-				if (!$result = $this->collection->seek($this, $this->compiler)) {
-					continue;
-				}
-
-				if (!$this->checkRequestPath($request->getURL()->getPath())) {
-					$this->request->redirect($this->anchor(), 301);
-				}
-
-				try {
-					$this->prepareAction();
-
-					foreach ($this->params as $param => $value) {
-						$this->request->set($param, $value);
-					}
-
-					$this->captureResponse();
-
-				} catch (Flourish\ContinueException $e) {
-					foreach (array_keys($this->params) as $param) {
-						$this->request->unset($param);
-					}
-
-					continue;
-
-				} catch (Flourish\YieldException $e) {
-					break;
-				}
-			} while ($result !== NULL);
 
 			return $this->response;
-		}
-
-
-		/**
-		 *
-		 */
-		public function setAction($action)
-		{
-			$this->action = $action;
-		}
-
-
-		/**
-		 *
-		 */
-		public function setParams(Array $params)
-		{
-			$this->params = $params;
-		}
-
-
-		/**
-		 *
-		 */
-		public function setRequestPath($path)
-		{
-			$this->requestPath = $path;
 		}
 
 
@@ -230,28 +184,32 @@
 		/**
 		 *
 		 */
+		public function yield($message = NULL)
+		{
+			throw new Flourish\YieldException($message);
+		}
+
+
+		/**
+		 *
+		 */
 		protected function captureResponse()
 		{
-			ob_start();
-
 			$this->emit('Router::actionBegin', [
 				'request'  => $this->request,
 				'response' => $this->response
 			]);
 
+			ob_start();
 			$response = call_user_func($this->resolver, $this->action);
-			$output   = ob_get_clean();
 
-			if ($output) {
-				$response = $this->mutable
-					? $this->response('OK', $output)
-					: $this->response($this->response->getStatus(), $output);
-
-			} else {
-				$response = $this->response->resolve($response);
+			if ($output = ob_get_clean()) {
+				$response = $output;
 			}
 
-			$this->response = $response;
+			$this->response = $this->mutable
+					? $this->response('OK', $response)
+					: $this->response($response);
 
 			$this->emit('Router::actionComplete', [
 				'request'  => $this->request,
@@ -263,13 +221,13 @@
 		/**
 		 *
 		 */
-		protected function prepareAction()
+		protected function prepareAction($action)
 		{
 			if (is_string($this->action)) {
 				if (strpos($this->action, '::') !== FALSE) {
 					$this->action = explode('::', $this->action);
 
-				} elseif (!is_callable($action)) {
+				} elseif (!is_callable($this->action)) {
 					throw new Flourish\ContinueException();
 				}
 			}

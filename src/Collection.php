@@ -60,26 +60,26 @@
 		 * Handles an error with an action in the routes collection
 		 *
 		 * @access public
-		 * @param string $base_path The base path for all the routes
+		 * @param string $base_url The base path for all the routes
 		 * @param string $status The status string (see HTTP namespace)
 		 * @param mixed $action The action to call on error
 		 * @return void;
 		 */
-		public function handle($base_path, $status, $action)
+		public function handle($base_url, $status, $action)
 		{
-			$base_path = rtrim($base_path, '/');
-			$hash     = md5($base_path . $error);
+			$base_url = rtrim($base_url, '/');
+			$hash     = md5($base_url . $error);
 
 			if (isset($this->handlers[$hash])) {
 				throw new Flourish\ProgrammerException(
 					'The base URL %s already has a handler registered for status %s.',
-					$base_path,
+					$base_url,
 					$status
 				);
 			}
 
 			$this->handlers[$hash] = [
-				'base_path' => $base_path,
+				'base_url' => $base_url,
 				'action'   => $action,
 				'status'   => $status
 			];
@@ -89,12 +89,12 @@
 		/**
 		 *
 		 */
-		public function link($base_path, $route, $action)
+		public function link($base_url, $route, $action)
 		{
-			$base_path = rtrim($base_path, '/');
+			$base_url = rtrim($base_url, '/');
 			$route    = ltrim($route, '/');
 			$pattern  = $this->parser->regularize(
-				$base_path . '/' . $route,
+				$base_url . '/' . $route,
 				static::DELIMITER,
 				$params = array()
 			);
@@ -113,7 +113,7 @@
 			}
 
 			$this->links[$pattern] = [
-				'base_path' => $base_path,
+				'base_url' => $base_url,
 				'action'   => $action,
 				'params'   => $params
 			];
@@ -130,11 +130,11 @@
 		 * @return void
 		 * @throws Flourish\ProgrammerException in the case of conflicting routes
 		 */
-		public function redirect($base_path, $route, $target, $type = 301)
+		public function redirect($base_url, $route, $target, $type = 301)
 		{
-			$base_path = rtrim($base_path, '/');
+			$base_url = rtrim($base_url, '/');
 			$route    = ltrim($route, '/');
-			$pattern  = $this->parser->regularize($base_path . '/' . $route, $params);
+			$pattern  = $this->parser->regularize($base_url . '/' . $route, $params);
 
 			if (isset($this->redirects[$pattern])) {
 				try {
@@ -151,7 +151,7 @@
 			}
 
 			$this->redirects[$pattern] = [
-				'base_path' => $base_path,
+				'base_url' => $base_url,
 				'params'   => $params,
 				'type'     => $type
 			];
@@ -161,9 +161,10 @@
 		/**
 		 *
 		 */
-		public function reset()
+		public function reset($loose_matching)
 		{
-			$this->link = NULL;
+			$this->link          = NULL;
+			$this->looseMatching = $loose_matching;
 
 			reset($this->links);
 		}
@@ -172,7 +173,7 @@
 		/**
 		 *
 		 */
-		public function seek(EngineInterface $engine, CompilerInterface $compiler)
+		public function seek(RequestInterface $request, CompilerInterface $compiler)
 		{
 			if (!$this->link = ($this->link ? next($this->links) : current($this->links))) {
 				return NULL;
@@ -181,8 +182,7 @@
 			$pattern = key($this->links);
 			$matches = $this->match(
 				static::DELIMITER . '^' . $pattern . '$' . static::DELIMITER,
-				$engine->getRequestPath(),
-				$engine->isRestless()
+				$request->getURL()->getPath()
 			);
 
 			if ($matches) {
@@ -197,10 +197,9 @@
 					$params = $remainder;
 				}
 
-				$engine->setAction($action);
-				$engine->setParams($params);
+				$request->params->set($params);
 
-				return TRUE;
+				return $action;
 			}
 
 			return FALSE;
@@ -210,7 +209,7 @@
 		/**
 		 *
 		 */
-		public function rewrite(EngineInterface $engine, CompilerInterface $compiler)
+		public function rewrite(RequestInterface $request, CompilerInterface $compiler)
 		{
 			if (!count($this->redirects)) {
 				return NULL;
@@ -218,9 +217,8 @@
 
 			foreach ($this->redirects as $pattern => $redirect) {
 				$matches = $this->match(
-					static::DELIMITER . '^' . $pattern . '$' . static::DELIMITER,
-					$engine->getRequestPath(),
-					$engine->isRestless()
+					static::DELIMITER . '^' . $paFtern . '$' . static::DELIMITER,
+					$request->getURL()->getPath()
 				);
 
 				if ($matches) {
@@ -230,10 +228,9 @@
 					$path   = $compiler->make($redirect['target'], $params, $remainder);
 					$type   = $redirect['type'];
 
-					$engine->setRequestPath($path);
-					$engine->setParams($remainder);
+					$request->params->set($params);
 
-					return $type ?: $this->rewrite($engine, $path);
+					return $type ?: $this->rewrite($request, $compiler);
 				}
 			}
 
@@ -289,13 +286,13 @@
 		/**
 		 *
 		 */
-		private function match($regex, $path, $require_canonical = TRUE)
+		private function match($regex, $path)
 		{
 			if (preg_match($regex, $path, $matches)) {
 				return $matches;
 			}
 
-			if (!$require_canonical) {
+			if ($this->looseMatching) {
 				$path = (substr($path, -1) == '/')
 					? rtrim($path, '/')
 					: $path . '/';
