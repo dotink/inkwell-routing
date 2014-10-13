@@ -1,6 +1,7 @@
 <?php namespace Inkwell\Routing
 {
 	use Dotink\Flourish;
+	use Inkwell\Transport\RequestInterface;
 
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
@@ -118,7 +119,7 @@
 				'params'   => $params
 			];
 		}
-		
+
 
 		/**
 		 * Redirects a route to a translation in the routes collection
@@ -175,14 +176,18 @@
 		 */
 		public function seek(RequestInterface $request, CompilerInterface $compiler)
 		{
-			if (!$this->link = ($this->link ? next($this->links) : current($this->links))) {
+			$this->link = $this->link === NULL
+				? current($this->links)
+				: next($this->links);
+
+			if (!$this->link) {
 				return NULL;
 			}
 
 			$pattern = key($this->links);
 			$matches = $this->match(
 				static::DELIMITER . '^' . $pattern . '$' . static::DELIMITER,
-				$request->getURL()->getPath()
+				$request
 			);
 
 			if ($matches) {
@@ -218,7 +223,7 @@
 			foreach ($this->redirects as $pattern => $redirect) {
 				$matches = $this->match(
 					static::DELIMITER . '^' . $paFtern . '$' . static::DELIMITER,
-					$request->getURL()->getPath()
+					$request
 				);
 
 				if ($matches) {
@@ -264,7 +269,7 @@
 					$old_target,
 					$target
 				);
-			}			
+			}
 		}
 
 
@@ -286,8 +291,11 @@
 		/**
 		 *
 		 */
-		private function match($regex, $path)
+		private function match($regex, $request)
 		{
+			$url  = $request->getURL();
+			$path = $url->getPath();
+
 			if (preg_match($regex, $path, $matches)) {
 				return $matches;
 			}
@@ -298,6 +306,10 @@
 					: $path . '/';
 
 				if (preg_match($regex, $path, $matches)) {
+
+					$request->setUrl($url->modify(['path' => $path]));
+
+
 					return $matches;
 				}
 			}
