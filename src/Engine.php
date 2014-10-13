@@ -95,9 +95,9 @@
 
 
 		/**
-		 *
+ 		 *
 		 */
-		public function continue($message = NULL)
+		public function defer($message)
 		{
 			throw new Flourish\ContinueException($message);
 		}
@@ -114,7 +114,7 @@
 			$this->response->setStatusCode($status_code);
 
 			if ($yield) {
-				$this->yield();
+				$this->quit();
 			}
 		}
 
@@ -184,7 +184,7 @@
 		/**
 		 *
 		 */
-		public function yield($message = NULL)
+		public function quit($message = NULL)
 		{
 			throw new Flourish\YieldException($message);
 		}
