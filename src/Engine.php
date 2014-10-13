@@ -110,7 +110,7 @@
 		{
 			$location = $this->request->getURL()->modify($location);
 
-			$this->response->setHeader('Location: ', $location);
+			$this->response->headers->set('Location', $location);
 			$this->response->setStatusCode($status_code);
 
 			if ($yield) {
@@ -203,13 +203,13 @@
 			ob_start();
 			$response = call_user_func($this->resolver, $this->action);
 
-			if ($output = ob_get_clean()) {
-				$response = $output;
-			}
+			if ($output = ob_get_clean() && $this->mutable) {
+				$this->response->setStatusCode(200);
+				$this->response->setBody($output);
 
-			$this->response = $this->mutable
-					? $this->response('OK', $response)
-					: $this->response($response);
+			} else {
+				$this->response->setBody($response);
+			}
 
 			$this->emit('Router::actionComplete', [
 				'request'  => $this->request,
