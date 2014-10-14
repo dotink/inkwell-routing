@@ -249,8 +249,8 @@
 			]);
 
 			ob_start();
-			$response   = call_user_func($this->getAction()[0]);
-			$output     = ob_get_clean();
+			$response = call_user_func($this->getAction()[0]);
+			$output   = ob_get_clean();
 
 			$this->response->setBody(!($output && $this->mutable)
 				? $response
@@ -269,13 +269,8 @@
 		 */
 		protected function prepareAction($action)
 		{
-			if (is_string($action)) {
-				if (strpos($action, '::') !== FALSE) {
-					$action = explode('::', $action);
-
-				} elseif (!is_callable($action)) {
-					throw new Flourish\ContinueException();
-				}
+			if (is_string($action) && strpos($action, '::') !== FALSE) {
+				$action = explode('::', $action);
 			}
 
 			if (is_array($action)) {
@@ -287,19 +282,16 @@
 					throw new Flourish\ContinueException();
 				}
 
-				if (strpos($action[1], '__') == 0) {
+				if (strpos($action[1], '__') === 0) {
 					throw new Flourish\ContinueException();
 				}
 
 				if (!method_exists($action[0], $action[1])) {
 					throw new Flourish\ContinueException();
 				}
+			}
 
-				if (!is_callable($action)) {
-					throw new Flourish\ContinueException();
-				}
-
-			} elseif (!$action instanceof Closure) {
+			if (!is_callable($action)) {
 				throw new Flourish\ContinueException();
 			}
 

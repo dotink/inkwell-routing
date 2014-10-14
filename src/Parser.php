@@ -38,8 +38,10 @@
 		/**
 		 *
 		 */
-		public function regularize($route, $regex_delimiter, &$params = array())
+		public function regularize($route, $regex_delimiter, &$params = NULL)
 		{
+			$params = array();
+
 			if (preg_match_all(static::REGEX_TOKEN, $route, $matches)) {
 				foreach ($matches[0] as $i => $token) {
 					$holder = sprintf(static::FORMAT_TOKEN, $i);
