@@ -46,7 +46,7 @@
 					$route  = str_replace($token, $holder, $route);
 				}
 
-				$route = preg_quote($route, $regex_delimeter);
+				$route = preg_quote($route, $regex_delimiter);
 
 				foreach ($matches[0] as $i => $token) {
 					$split_pos = strrpos($token, ':');

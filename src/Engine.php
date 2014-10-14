@@ -22,7 +22,7 @@
 		/**
 		 *
 		 */
-		private $action = NULL;
+		private $actions = array();
 
 
 		/**
@@ -100,6 +100,24 @@
 		public function defer($message)
 		{
 			throw new Flourish\ContinueException($message);
+		}
+
+
+		/**
+		 *
+		 */
+		public function getAction()
+		{
+			return end($this->actions);
+		}
+
+
+		/**
+		 *
+		 */
+		public function getEntryAction()
+		{
+			return reset($this->actions);
 		}
 
 
@@ -231,7 +249,7 @@
 			]);
 
 			ob_start();
-			$response = call_user_func($this->resolver, $this->action);
+			$response = call_user_func($this->resolver, $this->getAction(), $this, $this->request, $this->response);
 			$output   = ob_get_clean();
 
 			$this->response->setBody(!($output && $this->mutable)
@@ -251,41 +269,41 @@
 		 */
 		protected function prepareAction($action)
 		{
-			$this->action = $action;
+			if (is_string($action)) {
+				if (strpos($action, '::') !== FALSE) {
+					$action = explode('::', $action);
 
-			if (is_string($this->action)) {
-				if (strpos($this->action, '::') !== FALSE) {
-					$this->action = explode('::', $this->action);
-
-				} elseif (!is_callable($this->action)) {
+				} elseif (!is_callable($action)) {
 					throw new Flourish\ContinueException();
 				}
 			}
 
-			if (is_array($this->action)) {
-				if (count($this->action) != 2) {
+			if (is_array($action)) {
+				if (count($action) != 2) {
 					throw new Flourish\ContinueException();
 				}
 
-				if (!class_exists($this->action[0])) {
+				if (!class_exists($action[0])) {
 					throw new Flourish\ContinueException();
 				}
 
-				if (strpos($this->action[1], '__') == 0) {
+				if (strpos($action[1], '__') == 0) {
 					throw new Flourish\ContinueException();
 				}
 
-				if (!method_exists($this->action[0], $this->action[1])) {
+				if (!method_exists($action[0], $action[1])) {
 					throw new Flourish\ContinueException();
 				}
 
-				if (!is_callable($this->action)) {
+				if (!is_callable($action)) {
 					throw new Flourish\ContinueException();
 				}
 
-			} elseif (!$this->action instanceof Closure) {
+			} elseif (!$action instanceof Closure) {
 				throw new Flourish\ContinueException();
 			}
+
+			$this->actions[] = $action;
 		}
 	}
 }
