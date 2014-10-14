@@ -191,7 +191,7 @@
 
 					try {
 						$this->prepareAction($action);
-						$this->captureResponse($action);
+						$this->captureResponse();
 						break;
 
 					} catch (Flourish\ContinueException $e) {
@@ -249,8 +249,8 @@
 			]);
 
 			ob_start();
-			$response = call_user_func($this->resolver, $this->getAction(), $this, $this->request, $this->response);
-			$output   = ob_get_clean();
+			$response   = call_user_func($this->getAction()[0]);
+			$output     = ob_get_clean();
 
 			$this->response->setBody(!($output && $this->mutable)
 				? $response
@@ -303,7 +303,13 @@
 				throw new Flourish\ContinueException();
 			}
 
-			$this->actions[] = $action;
+			$this->actions[] = call_user_func(
+				$this->resolver,
+				$action,
+				$this,
+				$this->request,
+				$this->response
+			);
 		}
 	}
 }
