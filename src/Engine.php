@@ -2,10 +2,8 @@
 {
 	use Closure;
 	use Dotink\Flourish;
-	use Inkwell\RouterInterface;
-	use Inkwell\Transport\RequestInterface;
-	use Inkwell\Transport\ResponseInterface;
 	use Inkwell\Event;
+	use Inkwell\HTTP;
 
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
@@ -17,7 +15,7 @@
 	 *
 	 * @package Inkwell\Routing
 	 */
-	class Engine implements EngineInterface, Event\EmitterInterface
+	class Engine implements Event\EmitterInterface
 	{
 		use Event\Emitter;
 
@@ -59,7 +57,7 @@
 		/**
 		 *
 		 */
-		public function __construct(CollectionInterface $collection, ResponseInterface $response, CompilerInterface $compiler)
+		public function __construct(Collection $collection, HTTP\Resource\Response $response, CompilerInterface $compiler)
 		{
 			$this->collection = $collection;
 			$this->response   = $response;
@@ -124,7 +122,16 @@
 		/**
 		 *
 		 */
-		public function run(RequestInterface $request, Callable $resolver)
+		public function getCollection()
+		{
+			return $this->collection;
+		}
+
+
+		/**
+		 *
+		 */
+		public function run(HTTP\Resource\Request $request, Callable $resolver)
 		{
 			$this->request  = $request;
 			$this->resolver = $resolver;

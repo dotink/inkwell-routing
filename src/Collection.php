@@ -1,7 +1,7 @@
 <?php namespace Inkwell\Routing
 {
 	use Dotink\Flourish;
-	use Inkwell\Transport\RequestInterface;
+	use Inkwell\HTTP;
 
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
@@ -13,7 +13,7 @@
 	 *
 	 * @package Inkwell\Routing
 	 */
-	class Collection implements CollectionInterface
+	class Collection
 	{
 		const DELIMITER = '#';
 
@@ -174,7 +174,7 @@
 		/**
 		 *
 		 */
-		public function seek(RequestInterface $request, CompilerInterface $compiler)
+		public function seek(HTTP\Resource\Request $request, CompilerInterface $compiler)
 		{
 			$this->link = $this->link === NULL
 				? current($this->links)
@@ -214,7 +214,7 @@
 		/**
 		 *
 		 */
-		public function rewrite(RequestInterface $request, CompilerInterface $compiler)
+		public function rewrite(HTTP\Resource\Request $request, CompilerInterface $compiler)
 		{
 			if (!count($this->redirects)) {
 				return NULL;
