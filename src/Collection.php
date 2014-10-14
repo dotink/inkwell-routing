@@ -97,7 +97,7 @@
 			$pattern  = $this->parser->regularize(
 				$base_url . '/' . $route,
 				static::DELIMITER,
-				$params = array()
+				$params
 			);
 
 			if (isset($this->links[$pattern])) {
