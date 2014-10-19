@@ -57,11 +57,10 @@
 		/**
 		 *
 		 */
-		public function __construct(Collection $collection, HTTP\Resource\Response $response, CompilerInterface $compiler)
+		public function __construct(Collection $collection, HTTP\Resource\Response $response)
 		{
 			$this->collection = $collection;
 			$this->response   = $response;
-			$this->compiler   = $compiler;
 		}
 
 
@@ -80,15 +79,13 @@
 			$segments = explode('/', $this->compiler->make($path, $params, $remainder));
 			$anchor   = implode('/', array_map('rawurlencode', $segments));
 
-/*
-			$old      = [
-				'path'   => $this->request->getUrl()->getPath(),
-				'params' => $this->getParams()
-			];
-*/
 			if ($remainder_as_query) {
 				$anchor .= '?' . http_build_query($remainder, '', '&', PHP_QUERY_RFC3986);
 			}
+
+			//
+			// TODO: Make anchor loop through redirects
+			//
 
 			return $anchor;
 		}
@@ -97,9 +94,18 @@
 		/**
  		 *
 		 */
-		public function defer($message)
+		public function defer($message = NULL)
 		{
 			throw new Flourish\ContinueException($message);
+		}
+
+
+		/**
+		 *
+		 */
+		public function demit($message = NULL)
+		{
+			throw new Flourish\YieldException($message);
 		}
 
 
@@ -115,31 +121,6 @@
 		/**
 		 *
 		 */
-		public function getEntryAction()
-		{
-			return reset($this->actions);
-		}
-
-
-		/**
-		 *
-		 */
-		public function redirect($location, $status_code = 303, $yield = TRUE)
-		{
-			$location = $this->request->getURL()->modify($location);
-
-			$this->response->headers->set('Location', $location);
-			$this->response->setStatusCode($status_code);
-
-			if ($yield) {
-				$this->quit();
-			}
-		}
-
-
-		/**
-		 *
-		 */
 		public function getCollection()
 		{
 			return $this->collection;
@@ -149,72 +130,61 @@
 		/**
 		 *
 		 */
-		public function run(HTTP\Resource\Request $request, Callable $resolver)
+		public function getEntryAction()
 		{
-			$this->request  = $request;
-			$this->resolver = $resolver;
-
-			$this->collection->reset($this->restless);
-
-			if ($status_code = $this->collection->rewrite($request, $this->compiler)) {
-				$this->redirect($this->anchor(), $status_code, FALSE);
-
-			} else {
-
-				$original_url = $request->getUrl();
-
-				do {
-					$action = $this->collection->seek($request, $this->compiler);
-
-					if ($action === NULL) {
-
-						//
-						// No more actions left
-						//
-
-						break;
-					}
-
-					if ($action === FALSE) {
-
-						//
-						// Action did not match
-						//
-
-						continue;
-					}
-
-					if ($original_url->getPath() != $request->getURL()->getPath()) {
-						$this->redirect($this->anchor(), 301, FALSE);
-						break;
-					}
-
-					try {
-						$this->prepareAction($action);
-						$this->captureResponse();
-						break;
-
-					} catch (Flourish\ContinueException $e) {
-						continue;
-
-					} catch (Flourish\YieldException $e) {
-						break;
-					}
-
-				} while (TRUE);
-			}
-
-
-			return $this->response;
+			return reset($this->actions);
 		}
 
 
 		/**
 		 *
 		 */
-		public function setRestless($restless)
+		public function redirect($location, $demit = TRUE)
 		{
-			$this->restless = $restless;
+			$location = $this->request->getURL()->modify($location);
+
+			$this->response->headers->set('Location', $location);
+
+			if ($demit) {
+				$this->demit();
+			}
+		}
+
+
+		/**
+		 *
+		 */
+		public function rewrite($location, $defer = TRUE)
+		{
+			$location = $this->request->getURL()->modify($location);
+
+			$this->request->setURL($location);
+
+			if ($defer) {
+				$this->defer();
+			}
+		}
+
+
+		/**
+		 *
+		 */
+		public function run(HTTP\Resource\Request $request, Closure $resolver)
+		{
+			$this->request  = $request;
+			$this->resolver = $resolver->bindTo($this, $this);
+
+			try {
+				$this->collection->reset();
+				$this->resolve();
+
+			} catch (Flourish\YieldException $e) {
+				//
+				// Any yield means we should return the response right away
+				//
+			}
+
+			return $this->response;
 		}
 
 
@@ -230,78 +200,157 @@
 		/**
 		 *
 		 */
-		public function quit($message = NULL)
+		public function setRestless($restless)
 		{
-			throw new Flourish\YieldException($message);
+			$this->restless = $restless;
 		}
 
 
 		/**
 		 *
 		 */
-		protected function captureResponse()
+		protected function init($action)
 		{
-			$this->response->setStatusCode(200);
-
-			$this->emit('Router::actionBegin', [
-				'request'  => $this->request,
-				'response' => $this->response
-			]);
-
-			ob_start();
-			$response = call_user_func($this->getAction()[0]);
-			$output   = ob_get_clean();
-
-			$this->response->setBody(!($output && $this->mutable)
-				? $response
-				: $output
-			);
-
-			$this->emit('Router::actionComplete', [
-				'request'  => $this->request,
-				'response' => $this->response
-			]);
-		}
-
-
-		/**
-		 *
-		 */
-		protected function prepareAction($action)
-		{
-			if (is_string($action) && strpos($action, '::') !== FALSE) {
-				$action = explode('::', $action);
+			if (is_string($action)) {
+				if (strpos($action, '::') !== FALSE) {
+					$action = explode('::', $action);
+				} elseif (function_exists($action)) {
+					$action = function() use ($action) { $action(); };
+				} else {
+					$action = FALSE;
+				}
 			}
 
 			if (is_array($action)) {
 				if (count($action) != 2) {
-					throw new Flourish\ContinueException();
+					throw new Flourish\ProgrammerException(sprintf(
+						'Invalid controller callback "%s", must contain both class and method.',
+						implode('::', $action)
+					));
 				}
 
 				if (!class_exists($action[0])) {
-					throw new Flourish\ContinueException();
+					throw new Flourish\ProgrammerException(sprintf(
+						'Invalid controller callback "%s", class "%s" does not exist',
+						implode('::', $action),
+						$action[0]
+					));
 				}
 
 				if (strpos($action[1], '__') === 0) {
-					throw new Flourish\ContinueException();
+					throw new Flourish\ProgrammerException(sprintf(
+						'Invalid controller callback "%s", method "%s" is magic or implied private',
+						implode('::', $action),
+						$action[1]
+					));
 				}
 
 				if (!method_exists($action[0], $action[1])) {
-					throw new Flourish\ContinueException();
+					throw new Flourish\ProgrammerException(sprintf(
+						'Invalid controller callback "%s", method "%s" does not exist on class "%s"',
+						implode('::', $action),
+						$action[1],
+						$action[0]
+					));
+				}
+
+				if (!is_callable($action)) {
+					throw new Flourish\ProgrammerException(sprintf(
+						'Invalid controller callback "%s", method "%s" on class "%s" is not callable',
+						implode('::', $action),
+						$action[1],
+						$action[0]
+					));
 				}
 			}
 
-			if (!is_callable($action)) {
-				throw new Flourish\ContinueException();
+			$this->actions[] = call_user_func($this->resolver, $action);
+		}
+
+
+		/**
+		 *
+		 */
+		protected function exec()
+		{
+			if ($action = $this->getAction()[0]) {
+				ob_start();
+				$response = call_user_func($action);
+				$output   = ob_get_clean();
+
+				$this->response->set(!($output && $this->mutable)
+					? $response
+					: $output
+				);
+			}
+		}
+
+
+		/**
+		 *
+		 */
+		protected function resolve()
+		{
+			//
+			// Loop through rewrites and redirects
+			//
+
+			while ($this->collection->resolve($this->request, $this->response, $this->restless)) {
+				try {
+					if ($this->response->checkStatusCode(404)) {
+						$this->defer();
+
+					} elseif ($this->response->checkStatusCode(302)) {
+						$this->rewrite($this->response->get());
+
+					} else {
+						$target   = $this->response->get();
+						$location = $this->request->getURL()->modify($target);
+
+						$this->response->headers->set('Location', $location);
+
+						$this->demit();
+					}
+
+				} catch (Flourish\ContinueException $e) {
+					continue;
+				}
 			}
 
-			$this->actions[] = call_user_func(
-				$this->resolver,
-				$action,
-				$this,
-				$this->request,
-				$this->response
-			);
+			//
+			// Loop through links
+			//
+
+			while ($this->collection->seek($this->request, $this->response, $this->restless)) {
+				try {
+					if ($this->response->checkStatusCode(404)) {
+						$this->defer();
+
+					} elseif ($this->response->checkStatusCode(301)) {
+						$this->redirect($this->response->get());
+
+					} else {
+						$this->init($this->response->get());
+
+						$this->emit('Router::actionBegin', [
+							'request'  => $this->request,
+							'response' => $this->response
+						]);
+
+						$this->exec();
+
+						$this->emit('Router::actionComplete', [
+							'request'  => $this->request,
+							'response' => $this->response
+						]);
+
+						$this->demit();
+					}
+
+				} catch (Flourish\ContinueException $e) {
+					continue;
+				}
+			}
 		}
 	}
 }

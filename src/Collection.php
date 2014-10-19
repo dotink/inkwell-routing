@@ -51,9 +51,10 @@
 		/**
 		 *
 		 */
-		public function __construct(Parser $parser)
+		public function __construct(Parser $parser, CompilerInterface $compiler)
 		{
-			$this->parser = $parser;
+			$this->parser   = $parser;
+			$this->compiler = $compiler;
 		}
 
 
@@ -135,7 +136,11 @@
 		{
 			$base_url = rtrim($base_url, '/');
 			$route    = ltrim($route, '/');
-			$pattern  = $this->parser->regularize($base_url . '/' . $route, $params);
+			$pattern  = $this->parser->regularize(
+				$base_url . '/' . $route,
+				static::DELIMITER,
+				$params
+			);
 
 			if (isset($this->redirects[$pattern])) {
 				try {
@@ -154,6 +159,7 @@
 			$this->redirects[$pattern] = [
 				'base_url' => $base_url,
 				'params'   => $params,
+				'target'   => $target,
 				'type'     => $type
 			];
 		}
@@ -162,84 +168,93 @@
 		/**
 		 *
 		 */
-		public function reset($loose_matching)
+		public function reset()
 		{
-			$this->link          = NULL;
-			$this->looseMatching = $loose_matching;
-
-			reset($this->links);
+			$this->link     = reset($this->links);
+			$this->redirect = reset($this->redirects);
 		}
 
 
 		/**
 		 *
 		 */
-		public function seek(HTTP\Resource\Request $request, CompilerInterface $compiler)
+		public function resolve(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
 		{
-			$this->link = $this->link === NULL
-				? current($this->links)
-				: next($this->links);
-
-			if (!$this->link) {
-				return NULL;
+			if (!$this->redirect) {
+				return FALSE;
 			}
 
-			$pattern = key($this->links);
-			$matches = $this->match(
-				static::DELIMITER . '^' . $pattern . '$' . static::DELIMITER,
-				$request
-			);
+			$path   = $request->getUrl()->getPath();
+			$result = $this->match(key($this->redirects), $path, $loose);
 
-			if ($matches) {
-				array_shift($matches);
+			if (!$result) {
+				$response->set(NULL);
+				$response->setStatusCode(404);
 
-				$action = $this->link['action'];
-				$params = array_combine($this->link['params'], $matches);
-				$params = array_map('urldecode', $params);
+			} else {
+				$code   = $this->redirect['type'];
+				$target = $this->redirect['target'];
+				$params = array_map('urldecode', array_combine(
+					$this->redirect['params'],
+					$result['params']
+				));
 
-				if (is_string($action)) {
-					$action = $compiler->make($action, $params, $remainder);
+				if (is_string($target)) {
+					$target = $this->compiler->make($target, $params, $remainder);
 					$params = $remainder;
 				}
 
+				$response->set($target);
+				$response->setStatusCode($code);
 				$request->params->set($params);
-
-				return $action;
 			}
 
-			return FALSE;
+			$this->redirect = next($this->redirects);
+
+			return TRUE;
 		}
 
 
 		/**
 		 *
 		 */
-		public function rewrite(HTTP\Resource\Request $request, CompilerInterface $compiler)
+		public function seek(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
 		{
-			if (!count($this->redirects)) {
-				return NULL;
+			if (!$this->link) {
+				return FALSE;
 			}
 
-			foreach ($this->redirects as $pattern => $redirect) {
-				$matches = $this->match(
-					static::DELIMITER . '^' . $paFtern . '$' . static::DELIMITER,
-					$request
-				);
+			$path   = $request->getUrl()->getPath();
+			$result = $this->match(key($this->links), $path, $loose);
 
-				if ($matches) {
-					array_shift($matches);
+			if (!$result) {
+				$response->set(NULL);
+				$response->setStatusCode(404);
 
-					$params = array_combine($redirect['params'], $matches);
-					$path   = $compiler->make($redirect['target'], $params, $remainder);
-					$type   = $redirect['type'];
+			} elseif ($path != $result['path']) {
+				$response->set($result['path']);
+				$response->setStatusCode(301);
 
-					$request->params->set($params);
+			} else {
+				$action = $this->link['action'];
+				$params = array_map('urldecode', array_combine(
+					$this->link['params'],
+					$result['params']
+				));
 
-					return $type ?: $this->rewrite($request, $compiler);
+				if (is_string($action)) {
+					$action = $this->compiler->make($action, $params, $remainder);
+					$params = $remainder;
 				}
+
+				$response->set($action);
+				$response->setStatusCode(200);
+				$request->params->set($params);
 			}
 
-			return FALSE;
+			$this->link = next($this->links);
+
+			return TRUE;
 		}
 
 
@@ -291,27 +306,22 @@
 		/**
 		 *
 		 */
-		private function match($regex, $request)
+		private function match($pattern, $path, $loose = FALSE)
 		{
-			$url  = $request->getURL();
-			$path = $url->getPath();
+			$regex = static::DELIMITER . '^' . $pattern . '$' . static::DELIMITER;
 
 			if (preg_match($regex, $path, $matches)) {
-				return $matches;
+				return [
+					'path'   => array_shift($matches),
+					'params' => $matches
+				];
 			}
 
-			if ($this->looseMatching) {
-				$path = (substr($path, -1) == '/')
+			if ($loose && $path != '/') {
+				return $this->match($pattern, (substr($path, -1) == '/')
 					? rtrim($path, '/')
-					: $path . '/';
-
-				if (preg_match($regex, $path, $matches)) {
-
-					$request->setUrl($url->modify(['path' => $path]));
-
-
-					return $matches;
-				}
+					: $path . '/'
+				);
 			}
 
 			return FALSE;
