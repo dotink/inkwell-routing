@@ -278,7 +278,7 @@
 				$response = call_user_func($action);
 				$output   = ob_get_clean();
 
-				if ($output && $mutable) {
+				if ($output && $this->mutable) {
 					$this->response->set($output);
 				} elseif (!($response instanceof HTTP\Resource\Response)) {
 					$this->response->set($response);
