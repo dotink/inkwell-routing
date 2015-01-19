@@ -59,6 +59,24 @@
 
 
 		/**
+		 *
+		 */
+		public function getCompiler()
+		{
+			return $this->compiler;
+		}
+
+
+		/**
+		 *
+		 */
+		public function getParser()
+		{
+			return $this->parser;
+		}
+
+
+		/**
 		 * Handles an error with an action in the routes collection
 		 *
 		 * @access public

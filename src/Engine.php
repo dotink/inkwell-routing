@@ -69,17 +69,18 @@
 		 */
 		public function anchor($path = NULL, $params = array(), $remainder_as_query = TRUE)
 		{
-			switch (count(func_num_args())) {
+			switch (func_num_args()) {
 				case 0:
 					$path   = $this->request->getUrl()->getPath();
 				case 1:
-					$params = $this->request->params->getAll();
+					$params = $this->request->params->get();
 			}
 
-			$segments = explode('/', $this->compiler->make($path, $params, $remainder));
+			$compiler = $this->getCollection()->getCompiler();
+			$segments = explode('/', $compiler->make($path, $params, $remainder));
 			$anchor   = implode('/', array_map('rawurlencode', $segments));
 
-			if ($remainder_as_query) {
+			if ($remainder_as_query && count($remainder)) {
 				$anchor .= '?' . http_build_query($remainder, '', '&', PHP_QUERY_RFC3986);
 			}
 

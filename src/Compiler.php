@@ -155,11 +155,11 @@
 					throw new Flourish\ProgrammerException(
 						'Cannot compile invalid transformation filter %s.',
 						$filter
-					);	
+					);
 				}
 			}
 
-			return str_replace($token, $value, $target);		
+			return str_replace($token, $value, $target);
 		}
 	}
 }
