@@ -48,6 +48,13 @@
 		 */
 		private $request = NULL;
 
+
+		/**
+		 *
+		 */
+		private $resolver = NULL;
+
+
 		/**
 		 *
 		 */
@@ -170,10 +177,10 @@
 		/**
 		 *
 		 */
-		public function run(HTTP\Resource\Request $request, Closure $resolver)
+		public function run(HTTP\Resource\Request $request, ResolverInterface $resolver)
 		{
 			$this->request  = $request;
-			$this->resolver = $resolver->bindTo($this, $this);
+			$this->resolver = $resolver;
 
 			try {
 				$this->collection->reset();
@@ -265,7 +272,7 @@
 				}
 			}
 
-			$this->actions[] = call_user_func($this->resolver, $action);
+			return $action;
 		}
 
 
@@ -334,7 +341,12 @@
 						$this->redirect($this->response->get());
 
 					} else {
-						$this->init($this->response->get());
+						$action          = $this->init($this->response->get());
+						$this->actions[] = $this->resolver->resolve($action, [
+							'router'   => $this,
+							'request'  => $this->request,
+							'response' => $this->response
+						]);
 
 						$this->emit('Router::actionBegin', [
 							'request'  => $this->request,
