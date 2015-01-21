@@ -3,14 +3,14 @@
 	use Dotink\Flourish;
 
 	/**
-	 * Collection class responsible for aggregating and mapping routes to actions
+	 * Compiles strings based on token transformations and source data
 	 *
-	 * @copyright Copyright (c) 2012, Matthew J. Sahagian
-	 * @author Matthew J. Sahagian [mjs] <gent@dotink.org>
+	 * @copyright Copyright (c) 2015, Matthew J. Sahagian
+	 * @author Matthew J. Sahagian [mjs] <msahagian@dotink.org>
 	 *
-	 * @license Please reference the LICENSE.txt file at the root of this distribution
+	 * @license Please reference the LICENSE.md file at the root of this distribution
 	 *
-	 * @package Inkwell\Routing
+	 * @package Dotink\Inkwell
 	 */
 	class Compiler implements CompilerInterface
 	{

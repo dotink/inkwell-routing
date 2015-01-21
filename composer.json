@@ -3,6 +3,7 @@
 	"description": "Route incoming requests to various callbacks or directly to files",
 	"keywords": ["router"],
 	"license": "AGPL-3.0",
+	"type": "opus-package",
 	"authors": [
 		{
 			"name": "Matthew J. Sahagian",
@@ -18,10 +19,19 @@
 	],
 	"require": {
 		"php": ">=5.4.0",
+		"imarc/opus": "dev-master",
 		"dotink/flourish-core": "dev-master",
-		"dotink/inkwell-core": "dev-master"
+		"dotink/inkwell-http": "dev-master",
+		"dotink/inkwell-events": "dev-master"
 	},
 	"autoload": {
 		"classmap": ["src/"]
+	},
+	"extra": {
+		"opus": {
+			"inkwell/framework": {
+				"plugin" : ""
+			}
+		}
 	}
 }

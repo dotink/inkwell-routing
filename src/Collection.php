@@ -6,12 +6,12 @@
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
 	 *
-	 * @copyright Copyright (c) 2012, Matthew J. Sahagian
-	 * @author Matthew J. Sahagian [mjs] <gent@dotink.org>
+	 * @copyright Copyright (c) 2015, Matthew J. Sahagian
+	 * @author Matthew J. Sahagian [mjs] <msahagian@dotink.org>
 	 *
-	 * @license Please reference the LICENSE.txt file at the root of this distribution
+	 * @license Please reference the LICENSE.md file at the root of this distribution
 	 *
-	 * @package Inkwell\Routing
+	 * @package Dotink\Inkwell
 	 */
 	class Collection
 	{
