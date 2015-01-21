@@ -31,7 +31,8 @@
 		"opus": {
 			"inkwell/framework": {
 				"plugin/config" : "config",
-				"plugin/include" : "include"
+				"plugin/include" : "include",
+				"plugin/public" : "public"
 			}
 		}
 	}
