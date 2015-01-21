@@ -73,9 +73,7 @@
 			//
 
 			'redirects' => [
-				HTTP\REDIRECT_PERMANENT => [
-						'/' => '/docs/'
-				]
+
 			]
 		]
 	]);
