@@ -41,5 +41,6 @@
 			}
 		}
 
-		$app['router'] = $router;
+		$app['router']   = $router;
+		$app['resolver'] = NULL;
 	});

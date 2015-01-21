@@ -177,7 +177,7 @@
 		/**
 		 *
 		 */
-		public function run(HTTP\Resource\Request $request, ResolverInterface $resolver)
+		public function run(HTTP\Resource\Request $request, ResolverInterface $resolver = NULL)
 		{
 			$this->request  = $request;
 			$this->resolver = $resolver;
@@ -341,12 +341,23 @@
 						$this->redirect($this->response->get());
 
 					} else {
-						$action          = $this->init($this->response->get());
-						$this->actions[] = $this->resolver->resolve($action, [
-							'router'   => $this,
-							'request'  => $this->request,
-							'response' => $this->response
-						]);
+						$action = $this->init($this->response->get());
+
+						if ($this->resolver) {
+							$this->actions[] = $this->resolver->resolve($action, [
+								'router'   => $this,
+								'request'  => $this->request,
+								'response' => $this->response
+							]);
+
+						} elseif (!($action instanceof Closure)) {
+							throw new Flourish\ProgrammerException(
+								'Cannot execute non-Closure routing action, no resolver'
+							);
+
+						} else {
+							$this->actions[] = [$action->bindTo($this, $this), '{closure}'];
+						}
 
 						$this->emit('Router::actionBegin', [
 							'request'  => $this->request,
