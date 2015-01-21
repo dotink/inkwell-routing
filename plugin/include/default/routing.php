@@ -1,8 +1,8 @@
 <?php
 
-	return Affinity\Action::create(['core', 'response'], function($app, $container) {
+	return Affinity\Action::create(['core', 'response'], function($app, $broker) {
 
-		$router     = $container->make('Inkwell\Routing\Engine');
+		$router     = $broker->make('Inkwell\Routing\Engine');
 		$collection = $router->getCollection();
 
 		$router->setMutable($app['engine']->fetch('routing',  'mutable',  TRUE));

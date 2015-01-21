@@ -40,9 +40,9 @@
 
 			$app = include($init_path);
 
-			$app->run(function($app, $container) {
-				$app['request']  = $container->make('Inkwell\HTTP\Resource\Request');
-				$app['gateway']  = $container->make('Inkwell\HTTP\Gateway\Server');
+			$app->run(function($app, $broker) {
+				$app['request']  = $broker->make('Inkwell\HTTP\Resource\Request');
+				$app['gateway']  = $broker->make('Inkwell\HTTP\Gateway\Server');
 
 				$app['gateway']->populate($app['request']);
 				$app['gateway']->transport(
