@@ -1,9 +1,9 @@
 <?php namespace Inkwell\Routing
 {
 	use Closure;
-	use Dotink\Flourish;
-	use Inkwell\Event;
 	use Inkwell\HTTP;
+	use Inkwell\Event;
+	use Dotink\Flourish;
 
 	/**
 	 * The main routing engine which runs routing operations over a collection
