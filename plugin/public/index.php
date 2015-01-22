@@ -41,17 +41,13 @@
 			$app = include($init_path);
 
 			$app->run(function($app, $broker) {
-				$app['request']  = $broker->make('Inkwell\HTTP\Resource\Request');
-				$app['gateway']  = $broker->make('Inkwell\HTTP\Gateway\Server');
-
-				$app['gateway']->populate($app['request']);
 				$app['gateway']->transport(
 
 					//
 					// Running the router will return the response for transport
 					//
 
-					$app['response'] = $app['router']->run($app['request'], $app['resolver'])
+					$app['response'] = $app['router']->run($app['request'], $app['router.resolver'])
 				);
 			});
 		});
