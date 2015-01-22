@@ -41,6 +41,7 @@
 			}
 		}
 
-		$app['router']   = $router;
-		$app['resolver'] = NULL;
+		$app['router']            = $router;
+		$app['router.collection'] = $collection;
+		$app['router.resolver']   = NULL;
 	});
