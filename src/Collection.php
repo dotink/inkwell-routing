@@ -83,7 +83,7 @@
 		 * @param string $base_url The base path for all the routes
 		 * @param string $status The status string (see HTTP namespace)
 		 * @param mixed $action The action to call on error
-		 * @return void;
+		 * @return void
 		 */
 		public function handle($base_url, $status, $action)
 		{
