@@ -217,73 +217,11 @@
 		/**
 		 *
 		 */
-		protected function init($action)
-		{
-			if (is_string($action)) {
-				if (strpos($action, '::') !== FALSE) {
-					$action = explode('::', $action);
-				} elseif (function_exists($action)) {
-					$action = function() use ($action) { $action(); };
-				} else {
-					$action = FALSE;
-				}
-			}
-
-			if (is_array($action)) {
-				if (count($action) != 2) {
-					throw new Flourish\ProgrammerException(sprintf(
-						'Invalid controller callback "%s", must contain both class and method.',
-						implode('::', $action)
-					));
-				}
-
-				if (!class_exists($action[0])) {
-					throw new Flourish\ProgrammerException(sprintf(
-						'Invalid controller callback "%s", class "%s" does not exist',
-						implode('::', $action),
-						$action[0]
-					));
-				}
-
-				if (strpos($action[1], '__') === 0) {
-					throw new Flourish\ProgrammerException(sprintf(
-						'Invalid controller callback "%s", method "%s" is magic or implied private',
-						implode('::', $action),
-						$action[1]
-					));
-				}
-
-				if (!method_exists($action[0], $action[1])) {
-					throw new Flourish\ProgrammerException(sprintf(
-						'Invalid controller callback "%s", method "%s" does not exist on class "%s"',
-						implode('::', $action),
-						$action[1],
-						$action[0]
-					));
-				}
-
-				if (!is_callable($action)) {
-					throw new Flourish\ProgrammerException(sprintf(
-						'Invalid controller callback "%s", method "%s" on class "%s" is not callable',
-						implode('::', $action),
-						$action[1],
-						$action[0]
-					));
-				}
-			}
-
-			return $action;
-		}
-
-
-		/**
-		 *
-		 */
 		protected function exec()
 		{
-			if ($action = $this->getAction()[0]) {
+			if ($action = $this->getAction()) {
 				ob_start();
-				$response = call_user_func($action);
+				$response = $action();
 				$output   = ob_get_clean();
 
 				if ($output && $this->mutable) {
@@ -341,7 +279,7 @@
 						$this->redirect($this->response->get());
 
 					} else {
-						$action = $this->init($this->response->get());
+						$action = $this->response->get();
 
 						if ($this->resolver) {
 							$this->actions[] = $this->resolver->resolve($action, [
