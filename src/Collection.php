@@ -123,7 +123,7 @@
 				try {
 					$this->validateConflictedAction($action, $this->links[$pattern]['action']);
 
-				} catch (Flourish\ValidationException $e) {
+				} catch (Flourish\ProgrammerException $e) {
 					throw new Flourish\ProgrammerException(
 						'%s  Cannot add conflicting route %s.',
 						$e->getMessage(),
@@ -282,7 +282,7 @@
 		protected function validateConflictedAction($action, $old_action)
 		{
 			if ($action != $old_action) {
-				throw new Flourish\ValidationException(
+				throw new Flourish\ProgrammerException(
 					'Previous action %s conflicts with %s.',
 					$old_action,
 					$action

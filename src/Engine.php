@@ -113,6 +113,10 @@
 		 */
 		public function demit($message = NULL)
 		{
+			if (func_num_args()) {
+				$this->response->set($message);
+			}
+
 			throw new Flourish\YieldException($message);
 		}
 
@@ -219,6 +223,11 @@
 		 */
 		protected function exec()
 		{
+			$this->emit('Router::actionBegin', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
+
 			if ($action = $this->getAction()) {
 				ob_start();
 				$response = $action();
@@ -232,6 +241,11 @@
 					$this->response = $response;
 				}
 			}
+
+			$this->emit('Router::actionComplete', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 		}
 
 
@@ -297,18 +311,7 @@
 							$this->actions[] = [$action->bindTo($this, $this), '{closure}'];
 						}
 
-						$this->emit('Router::actionBegin', [
-							'request'  => $this->request,
-							'response' => $this->response
-						]);
-
 						$this->exec();
-
-						$this->emit('Router::actionComplete', [
-							'request'  => $this->request,
-							'response' => $this->response
-						]);
-
 						$this->demit();
 					}
 
