@@ -308,7 +308,7 @@
 							);
 
 						} else {
-							$this->actions[] = [$action->bindTo($this, $this), '{closure}'];
+							$this->actions[] = $action->bindTo($this, $this);
 						}
 
 						$this->exec();
