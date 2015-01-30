@@ -1,7 +1,6 @@
 <?php
 
 	return Affinity\Action::create(['core', 'http'], function($app, $broker) {
-
 		$collection = $broker->make('Inkwell\Routing\Collection');
 		$router     = $broker->make('Inkwell\Routing\Engine', [
 			':collection' => $collection,
