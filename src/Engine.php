@@ -133,18 +133,27 @@
 		/**
 		 *
 		 */
-		public function getCollection()
+		public function getEntryAction()
 		{
-			return $this->collection;
+			return reset($this->actions);
 		}
 
 
 		/**
 		 *
 		 */
-		public function getEntryAction()
+		public function isAction($action)
 		{
-			return reset($this->actions);
+			return $this->getAction() == $action;
+		}
+
+
+		/**
+		 *
+		 */
+		public function isEntryAction($action)
+		{
+			return $this->getEntryAction() == $action;
 		}
 
 
