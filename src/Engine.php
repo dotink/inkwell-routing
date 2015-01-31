@@ -326,7 +326,7 @@
 		 * @param mixed $action A callable action
 		 * @return void
 		 */
-		protected function exec(Callable $action)
+		protected function exec($action)
 		{
 			if ($action) {
 				ob_start();
