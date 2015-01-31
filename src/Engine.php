@@ -83,7 +83,7 @@
 					$params = $this->request->params->get();
 			}
 
-			$compiler = $this->getCollection()->getCompiler();
+			$compiler = $this->collection->getCompiler();
 			$segments = explode('/', $compiler->make($path, $params, $remainder));
 			$anchor   = implode('/', array_map('rawurlencode', $segments));
 
