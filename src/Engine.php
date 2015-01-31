@@ -168,7 +168,7 @@
 			}
 
 			$this->handlers[$hash] = [
-				'base_url' => $base_url,
+				'base_url' => $base_url ?: '/',
 				'action'   => $action,
 				'status'   => $status
 			];
@@ -268,13 +268,14 @@
 
 			if ($this->response->getStatusCode() >= 400) {
 				$candidate_handlers = array();
+				$request_path       = $this->request->getUrl()->getPath();
 
 				foreach ($this->handlers as $handler) {
 					if ($handler['status'] != $this->response->getStatus()) {
 						continue;
 					}
 
-					if (strpos($this->request->getUrl()->getPath(), $handler['base_url']) == 0) {
+					if (strpos($request_path, $handler['base_url']) === 0) {
 						$candidate_handlers[] = $handler;
 					}
 				}
