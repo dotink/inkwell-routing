@@ -34,6 +34,12 @@
 		/**
 		 *
 		 */
+		private $handlers = array();
+
+
+		/**
+		 *
+		 */
 		private $params = array();
 
 
@@ -140,6 +146,36 @@
 
 
 		/**
+		 * Handles an error with an action in the routes collection
+		 *
+		 * @access public
+		 * @param string $base_url The base path for all the routes
+		 * @param string $status The status string (see HTTP namespace)
+		 * @param mixed $action The action to call on error
+		 * @return void
+		 */
+		public function handle($base_url, $status, $action)
+		{
+			$base_url = rtrim($base_url, '/');
+			$hash     = md5($base_url . $status);
+
+			if (isset($this->handlers[$hash])) {
+				throw new Flourish\ProgrammerException(
+					'The base URL %s already has a handler registered for status %s.',
+					$base_url,
+					$status
+				);
+			}
+
+			$this->handlers[$hash] = [
+				'base_url' => $base_url,
+				'action'   => $action,
+				'status'   => $status
+			];
+		}
+
+
+		/**
 		 *
 		 */
 		public function isAction($action)
@@ -195,14 +231,63 @@
 			$this->request  = $request;
 			$this->resolver = $resolver;
 
-			try {
-				$this->collection->reset();
-				$this->resolve();
+			$this->collection->reset();
 
-			} catch (Flourish\YieldException $e) {
-				//
-				// Any yield means we should return the response right away
-				//
+			//
+			// Perform Rewrites
+			//
+
+			while ($this->collection->resolve($this->request, $this->response, $this->restless)) {
+				try {
+					$this->mapRewrite();
+				} catch (Flourish\YieldException $e) {
+					return $this->response;
+				} catch (Flourish\ContinueException $e) {
+					continue;
+				}
+			}
+
+			//
+			// Run Action
+			//
+
+			while ($this->collection->seek($this->request, $this->response, $this->restless)) {
+				try {
+					$this->mapAction();
+					$this->runAction();
+				} catch (Flourish\YieldException $e) {
+					return $this->response;
+				} catch (Flourish\ContinueException $e) {
+					continue;
+				}
+			}
+
+			//
+			// Run any handlers
+			//
+
+			if ($this->response->getStatusCode() >= 400) {
+				$candidate_handlers = array();
+
+				foreach ($this->handlers as $handler) {
+					if ($handler['status'] != $this->response->getStatus()) {
+						continue;
+					}
+
+					if (strpos($this->request->getUrl()->getPath(), $handler['base_url']) == 0) {
+						$candidate_handlers[] = $handler;
+					}
+				}
+
+				usort($candidate_handlers, function($a, $b) {
+					return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
+				});
+
+				$handler = reset($candidate_handlers);
+				$handler = $handler['action'];
+				$handler = $this->resolve($handler);
+
+				$this->exec($handler);
 			}
 
 			return $this->response;
@@ -219,7 +304,11 @@
 
 
 		/**
+		 * Sets the router to restless mode (will try / and non-/ URLs)
 		 *
+		 * @access public
+		 * @param boolean $restless TRUE to try both URL forms, FALSE to only accept what is given
+		 * @return void
 		 */
 		public function setRestless($restless)
 		{
@@ -228,16 +317,18 @@
 
 
 		/**
+		 * Executes a resolved action
 		 *
+		 * This function modifies the response directly and should be expected to mutate the
+		 * output based on the action.
+		 *
+		 * @access protected
+		 * @param mixed $action A callable action
+		 * @return void
 		 */
-		protected function exec()
+		protected function exec(Callable $action)
 		{
-			$this->emit('Router::actionBegin', [
-				'request'  => $this->request,
-				'response' => $this->response
-			]);
-
-			if ($action = $this->getAction()) {
+			if ($action) {
 				ob_start();
 				$response = $action();
 				$output   = ob_get_clean();
@@ -250,84 +341,99 @@
 					$this->response = $response;
 				}
 			}
+		}
 
-			$this->emit('Router::actionComplete', [
-				'request'  => $this->request,
-				'response' => $this->response
-			]);
+
+		/**
+		 * Maps an action
+		 */
+		protected function mapAction()
+		{
+			if ($this->response->checkStatusCode(404)) {
+				$this->defer();
+
+			} elseif ($this->response->checkStatusCode(301)) {
+				$this->redirect($this->response->get());
+
+			} else {
+				$this->actions[] = $this->resolve($this->response->get());
+			}
 		}
 
 
 		/**
 		 *
 		 */
-		protected function resolve()
+		protected function mapRewrite()
 		{
-			//
-			// Loop through rewrites and redirects
-			//
+			if ($this->response->checkStatusCode(404)) {
+				$this->defer();
 
-			while ($this->collection->resolve($this->request, $this->response, $this->restless)) {
-				try {
-					if ($this->response->checkStatusCode(404)) {
-						$this->defer();
+			} elseif ($this->response->checkStatusCode(302)) {
+				$this->rewrite($this->response->get());
 
-					} elseif ($this->response->checkStatusCode(302)) {
-						$this->rewrite($this->response->get());
+			} else {
+				$target   = $this->response->get();
+				$location = $this->request->getURL()->modify($target);
 
-					} else {
-						$target   = $this->response->get();
-						$location = $this->request->getURL()->modify($target);
+				$this->response->headers->set('Location', $location);
 
-						$this->response->headers->set('Location', $location);
+				$this->demit();
+			}
+		}
 
-						$this->demit();
-					}
 
-				} catch (Flourish\ContinueException $e) {
-					continue;
-				}
+
+
+		/**
+		 * Resolve an action using the registered resolver
+		 *
+		 * @access protected
+		 * @param mixed $action The unresolved action
+		 * @return mixed The resolved action (a valid callback)
+		 * @throws Flourish\ProgrammerException If unresolved non-closure is passed without resolver
+		 */
+		protected function resolve($action)
+		{
+			if ($this->resolver) {
+				return $this->resolver->resolve($action, [
+					'router'   => $this,
+					'request'  => $this->request,
+					'response' => $this->response
+				]);
+
+			} elseif ($action instanceof Closure) {
+				return $action->bindTo($this, $this);
 			}
 
-			//
-			// Loop through links
-			//
+			throw new Flourish\ProgrammerException(
+				'Cannot resolve non-Closure action, try registering a resolver'
+			);
+		}
 
-			while ($this->collection->seek($this->request, $this->response, $this->restless)) {
-				try {
-					if ($this->response->checkStatusCode(404)) {
-						$this->defer();
 
-					} elseif ($this->response->checkStatusCode(301)) {
-						$this->redirect($this->response->get());
+		/**
+		 * Runs the current action
+		 *
+		 * This will demit when completed causing the action chain to break.
+		 *
+		 * @return void
+		 */
+		public function runAction()
+		{
+			$this->emit('Router::actionBegin', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 
-					} else {
-						$action = $this->response->get();
+			$this->exec($this->getAction());
 
-						if ($this->resolver) {
-							$this->actions[] = $this->resolver->resolve($action, [
-								'router'   => $this,
-								'request'  => $this->request,
-								'response' => $this->response
-							]);
+			$this->emit('Router::actionComplete', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 
-						} elseif (!($action instanceof Closure)) {
-							throw new Flourish\ProgrammerException(
-								'Cannot execute non-Closure routing action, no resolver'
-							);
-
-						} else {
-							$this->actions[] = $action->bindTo($this, $this);
-						}
-
-						$this->exec();
-						$this->demit();
-					}
-
-				} catch (Flourish\ContinueException $e) {
-					continue;
-				}
-			}
+			$this->demit();
 		}
 	}
 }

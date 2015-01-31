@@ -24,13 +24,6 @@
 				$collection->link($base_url, $route, $action);
 			}
 
-			//
-			// Handlers
-			//
-
-			foreach ($handlers as $status => $action) {
-				$collection->handle($base_url, $status, $action);
-			}
 
 			//
 			// Redirects
@@ -41,6 +34,16 @@
 					$collection->redirect($base_url, $route, $target, $type);
 				}
 			}
+
+
+			//
+			// Handlers
+			//
+
+			foreach ($handlers as $status => $action) {
+				$router->handle($base_url, $status, $action);
+			}
+
 		}
 
 		$app['router']            = $router;

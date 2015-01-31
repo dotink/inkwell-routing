@@ -21,12 +21,6 @@
 		/**
 		 *
 		 */
-		protected $handlers = array();
-
-
-		/**
-		 *
-		 */
 		protected $link = NULL;
 
 
@@ -73,36 +67,6 @@
 		public function getParser()
 		{
 			return $this->parser;
-		}
-
-
-		/**
-		 * Handles an error with an action in the routes collection
-		 *
-		 * @access public
-		 * @param string $base_url The base path for all the routes
-		 * @param string $status The status string (see HTTP namespace)
-		 * @param mixed $action The action to call on error
-		 * @return void
-		 */
-		public function handle($base_url, $status, $action)
-		{
-			$base_url = rtrim($base_url, '/');
-			$hash     = md5($base_url . $error);
-
-			if (isset($this->handlers[$hash])) {
-				throw new Flourish\ProgrammerException(
-					'The base URL %s already has a handler registered for status %s.',
-					$base_url,
-					$status
-				);
-			}
-
-			$this->handlers[$hash] = [
-				'base_url' => $base_url,
-				'action'   => $action,
-				'status'   => $status
-			];
 		}
 
 
@@ -194,7 +158,7 @@
 
 
 		/**
-		 *
+		 * Resolves a URL redirect
 		 */
 		public function resolve(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
 		{
@@ -234,7 +198,7 @@
 
 
 		/**
-		 *
+		 * Seeks the appropriate action for a given request
 		 */
 		public function seek(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
 		{
