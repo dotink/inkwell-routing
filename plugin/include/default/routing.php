@@ -29,8 +29,8 @@
 			// Redirects
 			//
 
-			foreach ($redirects as $type => $redirects) {
-				foreach ($redirects as $route => $target) {
+			foreach ($redirects as $type => $type_redirects) {
+				foreach ($type_redirects as $route => $target) {
 					$collection->redirect($base_url, $route, $target, $type);
 				}
 			}

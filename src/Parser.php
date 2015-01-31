@@ -79,7 +79,7 @@
 			if (isset(static::$patterns[$pattern])) {
 				return str_replace($holder, self::$patterns[$pattern], $route);
 
-			} elseif ($patterns[0] == '(' && $pattern[strlen($pattern) - 1] == ')') {
+			} elseif ($pattern[0] == '(' && substr($pattern, -1) == ')') {
 				return str_replace($holder, $pattern, $route);
 			}
 
