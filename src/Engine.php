@@ -233,6 +233,11 @@
 
 			$this->collection->reset();
 
+			$this->emit('Router::begin', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
+
 			//
 			// Perform Rewrites
 			//
@@ -290,6 +295,11 @@
 
 				$this->exec($handler);
 			}
+
+			$this->emit('Router::end', [
+				'request'  => $this->request,
+				'response' => $this->response
+			]);
 
 			return $this->response;
 		}
