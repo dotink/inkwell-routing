@@ -196,10 +196,11 @@
 		/**
 		 *
 		 */
-		public function redirect($location, $demit = TRUE)
+		public function redirect($location, $type = 303, $demit = TRUE)
 		{
 			$location = $this->request->getURL()->modify($location);
 
+			$this->response->setStatusCode($type);
 			$this->response->headers->set('Location', $location);
 
 			if ($demit) {
@@ -246,54 +247,59 @@
 				try {
 					$this->mapRewrite();
 				} catch (Flourish\YieldException $e) {
-					return $this->response;
+					break;
 				} catch (Flourish\ContinueException $e) {
 					continue;
 				}
 			}
 
-			//
-			// Run Action
-			//
+			if ($this->response->checkStatusCode(['404', '302'])) {
 
-			while ($this->collection->seek($this->request, $this->response, $this->restless)) {
-				try {
-					$this->mapAction();
-					$this->runAction();
-				} catch (Flourish\YieldException $e) {
-					return $this->response;
-				} catch (Flourish\ContinueException $e) {
-					continue;
-				}
-			}
+				//
+				// No redirects or only internal redirects were found, attempt to run
+				// actions.
+				//
 
-			//
-			// Run any handlers
-			//
-
-			if ($this->response->getStatusCode() >= 400) {
-				$candidate_handlers = array();
-				$request_path       = $this->request->getUrl()->getPath();
-
-				foreach ($this->handlers as $handler) {
-					if ($handler['status'] != $this->response->getStatus()) {
+				while ($this->collection->seek($this->request, $this->response, $this->restless)) {
+					try {
+						$this->mapAction();
+						$this->runAction();
+					} catch (Flourish\YieldException $e) {
+						break;
+					} catch (Flourish\ContinueException $e) {
 						continue;
 					}
-
-					if (strpos($request_path, $handler['base_url']) === 0) {
-						$candidate_handlers[] = $handler;
-					}
 				}
 
-				usort($candidate_handlers, function($a, $b) {
-					return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
-				});
+				if ($this->response->getStatusCode() >= 400) {
 
-				$handler = reset($candidate_handlers);
-				$handler = $handler['action'];
-				$handler = $this->resolve($handler);
+					//
+					// No viable response was found, attempt to run handlers
+					//
 
-				$this->exec($handler);
+					$candidate_handlers = array();
+					$request_path       = $this->request->getUrl()->getPath();
+
+					foreach ($this->handlers as $handler) {
+						if ($handler['status'] != $this->response->getStatus()) {
+							continue;
+						}
+
+						if (strpos($request_path, $handler['base_url']) === 0) {
+							$candidate_handlers[] = $handler;
+						}
+					}
+
+					usort($candidate_handlers, function($a, $b) {
+						return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
+					});
+
+					$handler = reset($candidate_handlers);
+					$handler = $handler['action'];
+					$handler = $this->resolve($handler);
+
+					$this->exec($handler);
+				}
 			}
 
 			$this->emit('Router::end', [
@@ -364,7 +370,7 @@
 				$this->defer();
 
 			} elseif ($this->response->checkStatusCode(301)) {
-				$this->redirect($this->response->get());
+				$this->redirect($this->response->get(), 301);
 
 			} else {
 				$this->actions[] = $this->resolve($this->response->get());
