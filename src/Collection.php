@@ -57,14 +57,20 @@
 		}
 
 
+
 		/**
 		 *
 		 */
-		public function base($base_url)
+		public function base($base_url, Callable $callback)
 		{
-			return new BaseGroup($this, $base_url);
-		}
+			$group = new BaseGroup($this, $base_url);
 
+			if ($callback) {
+				$callback($group);
+			}
+
+			return $this;
+		}
 
 		/**
 		 *

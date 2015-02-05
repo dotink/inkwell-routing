@@ -28,15 +28,6 @@
 		/**
 		 *
 		 */
-		public function base($base_url)
-		{
-			return $this->collection->base($base_url);
-		}
-
-
-		/**
-		 *
-		 */
 		public function handle($status, $action)
 		{
 			$this->collection->handle($this->baseUrl, $status, $action);
