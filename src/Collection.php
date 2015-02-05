@@ -17,6 +17,11 @@
 	{
 		const DELIMITER = '#';
 
+		/**
+		 *
+		 */
+		private $handlers = array();
+
 
 		/**
 		 *
@@ -45,10 +50,19 @@
 		/**
 		 *
 		 */
-		public function __construct(Parser $parser, CompilerInterface $compiler)
+		public function __construct(ParserInterface $parser = NULL, CompilerInterface $compiler = NULL)
 		{
-			$this->parser   = $parser;
-			$this->compiler = $compiler;
+			$this->parser   = $parser   ?: new Parser();
+			$this->compiler = $compiler ?: new Compiler();
+		}
+
+
+		/**
+		 *
+		 */
+		public function base($base_url)
+		{
+			return new BaseGroup($this, $base_url);
 		}
 
 
@@ -67,6 +81,36 @@
 		public function getParser()
 		{
 			return $this->parser;
+		}
+
+
+		/**
+		 * Handles an error with an action in the routes collection
+		 *
+		 * @access public
+		 * @param string $base_url The base path for all the routes
+		 * @param string $status The status string (see HTTP namespace)
+		 * @param mixed $action The action to call on error
+		 * @return void
+		 */
+		public function handle($base_url, $status, $action)
+		{
+			$base_url = rtrim($base_url, '/');
+			$hash     = md5($base_url . $status);
+
+			if (isset($this->handlers[$hash])) {
+				throw new Flourish\ProgrammerException(
+					'The base URL %s already has a handler registered for status %s.',
+					$base_url,
+					$status
+				);
+			}
+
+			$this->handlers[$hash] = [
+				'base_url' => $base_url ?: '/',
+				'action'   => $action,
+				'status'   => $status
+			];
 		}
 
 
@@ -237,6 +281,40 @@
 			$this->link = next($this->links);
 
 			return TRUE;
+		}
+
+
+		/**
+		 *
+		 */
+		public function wrap(HTTP\Resource\Request $request, HTTP\Resource\Response $response)
+		{
+			$candidate_handlers = array();
+			$request_path       = $request->getUrl()->getPath();
+
+			foreach ($this->handlers as $handler) {
+				if ($handler['status'] != $response->getStatus()) {
+					continue;
+				}
+
+				if (strpos($request_path, $handler['base_url']) === 0) {
+					$candidate_handlers[] = $handler;
+				}
+			}
+
+			usort($candidate_handlers, function($a, $b) {
+				return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
+			});
+
+			$handler = reset($candidate_handlers);
+
+			if ($handler && isset($handler['action'])) {
+				$response->set($handler['action']);
+
+				return TRUE;
+			}
+
+			return FALSE;
 		}
 
 

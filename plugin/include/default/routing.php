@@ -41,7 +41,7 @@
 			//
 
 			foreach ($handlers as $status => $action) {
-				$router->handle($base_url, $status, $action);
+				$collection->handle($base_url, $status, $action);
 			}
 
 		}

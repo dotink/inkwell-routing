@@ -1,6 +1,7 @@
 <?php namespace Inkwell\Routing
 {
 	use Closure;
+	use Exception;
 	use Inkwell\HTTP;
 	use Inkwell\Event;
 	use Dotink\Flourish;
@@ -29,12 +30,6 @@
 		 *
 		 */
 		private $collection = NULL;
-
-
-		/**
-		 *
-		 */
-		private $handlers = array();
 
 
 		/**
@@ -146,36 +141,6 @@
 
 
 		/**
-		 * Handles an error with an action in the routes collection
-		 *
-		 * @access public
-		 * @param string $base_url The base path for all the routes
-		 * @param string $status The status string (see HTTP namespace)
-		 * @param mixed $action The action to call on error
-		 * @return void
-		 */
-		public function handle($base_url, $status, $action)
-		{
-			$base_url = rtrim($base_url, '/');
-			$hash     = md5($base_url . $status);
-
-			if (isset($this->handlers[$hash])) {
-				throw new Flourish\ProgrammerException(
-					'The base URL %s already has a handler registered for status %s.',
-					$base_url,
-					$status
-				);
-			}
-
-			$this->handlers[$hash] = [
-				'base_url' => $base_url ?: '/',
-				'action'   => $action,
-				'status'   => $status
-			];
-		}
-
-
-		/**
 		 *
 		 */
 		public function isAction($action)
@@ -277,28 +242,14 @@
 					// No viable response was found, attempt to run handlers
 					//
 
-					$candidate_handlers = array();
-					$request_path       = $this->request->getUrl()->getPath();
-
-					foreach ($this->handlers as $handler) {
-						if ($handler['status'] != $this->response->getStatus()) {
-							continue;
-						}
-
-						if (strpos($request_path, $handler['base_url']) === 0) {
-							$candidate_handlers[] = $handler;
+					if ($this->collection->wrap($this->request, $this->response)) {
+						try {
+							$this->runHandler();
+						} catch (Exception $e) {
+							$this->response->setStatusCode(500);
+							$this->response->set(NULL);
 						}
 					}
-
-					usort($candidate_handlers, function($a, $b) {
-						return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
-					});
-
-					$handler = reset($candidate_handlers);
-					$handler = $handler['action'];
-					$handler = $this->resolve($handler);
-
-					$this->exec($handler);
 				}
 			}
 
@@ -395,11 +346,9 @@
 
 				$this->response->headers->set('Location', $location);
 
-				$this->demit();
+				$this->demit(NULL);
 			}
 		}
-
-
 
 
 		/**
@@ -426,6 +375,15 @@
 			throw new Flourish\ProgrammerException(
 				'Cannot resolve non-Closure action, try registering a resolver'
 			);
+		}
+
+
+		/**
+		 *
+		 */
+		public function runHandler()
+		{
+			$this->exec($this->resolve($this->response->get()));
 		}
 
 
