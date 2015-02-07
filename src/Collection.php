@@ -216,7 +216,7 @@
 				return FALSE;
 			}
 
-			$path   = $request->getUrl()->getPath();
+			$path   = $request->getTarget();
 			$result = $this->match(key($this->redirects), $path, $loose);
 
 			if (!$result) {
@@ -256,7 +256,7 @@
 				return FALSE;
 			}
 
-			$path   = $request->getUrl()->getPath();
+			$path   = $request->getTarget();
 			$result = $this->match(key($this->links), $path, $loose);
 
 			if (!$result) {
@@ -296,7 +296,7 @@
 		public function wrap(HTTP\Resource\Request $request, HTTP\Resource\Response $response)
 		{
 			$candidate_handlers = array();
-			$request_path       = $request->getUrl()->getPath();
+			$request_path       = $request->getTarget();
 
 			foreach ($this->handlers as $handler) {
 				if ($handler['status'] != $response->getStatus()) {

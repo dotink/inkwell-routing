@@ -79,7 +79,7 @@
 		{
 			switch (func_num_args()) {
 				case 0:
-					$path   = $this->request->getUrl()->getPath();
+					$path   = $this->request->getTarget();
 				case 1:
 					$params = $this->request->params->get();
 			}
