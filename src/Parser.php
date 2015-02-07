@@ -15,7 +15,7 @@
 	class Parser implements ParserInterface
 	{
 		const FORMAT_TOKEN    = '%%TOKEN%d%%';
-		const REGEX_TOKEN     = '/\[[^\]]*\]/';
+		const REGEX_TOKEN     = '/\[\(.+\):[^\]]+\]|\[[^\]]*\]/';
 
 
 		/**
