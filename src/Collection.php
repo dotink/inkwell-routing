@@ -303,9 +303,12 @@
 					continue;
 				}
 
-				if (strpos($request_path, $handler['base']) === 0) {
+				if (!$handler['base']) {
+					$candidate_handlers[] = $handler;
+				} elseif (strpos($request_path, $handler['base']) === 0) {
 					$candidate_handlers[] = $handler;
 				}
+				
 			}
 
 			usort($candidate_handlers, function($a, $b) {
