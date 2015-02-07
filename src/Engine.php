@@ -2,8 +2,8 @@
 {
 	use Closure;
 	use Exception;
-	use Inkwell\HTTP;
 	use Inkwell\Event;
+	use Inkwell\Transport;
 	use Dotink\Flourish;
 
 	/**
@@ -65,7 +65,7 @@
 		/**
 		 *
 		 */
-		public function __construct(Collection $collection, HTTP\Resource\Response $response)
+		public function __construct(Collection $collection, Transport\Resource\Response $response)
 		{
 			$this->collection = $collection;
 			$this->response   = $response;
@@ -192,7 +192,7 @@
 		/**
 		 *
 		 */
-		public function run(HTTP\Resource\Request $request, ResolverInterface $resolver = NULL)
+		public function run(Transport\Resource\Request $request, ResolverInterface $resolver = NULL)
 		{
 			$this->request  = $request;
 			$this->resolver = $resolver;
@@ -303,7 +303,7 @@
 
 				if ($output && $this->mutable) {
 					$this->response->set($output);
-				} elseif (!($response instanceof HTTP\Resource\Response)) {
+				} elseif (!($response instanceof Transport\Resource\Response)) {
 					$this->response->set($response);
 				} else {
 					$this->response = $response;

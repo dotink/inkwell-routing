@@ -18,10 +18,10 @@
 		/**
 		 *
 		 */
-		public function __construct(Collection $collection, $base_url = '/')
+		public function __construct(Collection $collection, $base)
 		{
 			$this->collection = $collection;
-			$this->baseUrl    = $base_url;
+			$this->base       = $base;
 		}
 
 
@@ -30,7 +30,7 @@
 		 */
 		public function handle($status, $action)
 		{
-			$this->collection->handle($this->baseUrl, $status, $action);
+			$this->collection->handle($this->base, $status, $action);
 
 			return $this;
 		}
@@ -41,7 +41,7 @@
 		 */
 		public function link($route, $action)
 		{
-			$this->collection->link($this->baseUrl, $route, $action);
+			$this->collection->link($this->base, $route, $action);
 
 			return $this;
 		}
@@ -52,7 +52,7 @@
 		 */
 		public function redirect($route, $target, $type = 301)
 		{
-			$this->collection->redirect($this->baseUrl, $route, $target, $type);
+			$this->collection->redirect($this->base, $route, $target, $type);
 
 			return $this;
 		}

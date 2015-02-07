@@ -1,7 +1,7 @@
 <?php namespace Inkwell\Routing
 {
 	use Dotink\Flourish;
-	use Inkwell\HTTP;
+	use Inkwell\Transport;
 
 	/**
 	 * Collection class responsible for aggregating and mapping routes to actions
@@ -61,9 +61,9 @@
 		/**
 		 *
 		 */
-		public function base($base_url, Callable $callback)
+		public function base($base, Callable $callback)
 		{
-			$group = new BaseGroup($this, $base_url);
+			$group = new BaseGroup($this, $base);
 
 			if ($callback) {
 				$callback($group);
@@ -94,28 +94,28 @@
 		 * Handles an error with an action in the routes collection
 		 *
 		 * @access public
-		 * @param string $base_url The base path for all the routes
-		 * @param string $status The status string (see HTTP namespace)
+		 * @param string $base The base for all the routes
+		 * @param string $status The status string
 		 * @param mixed $action The action to call on error
 		 * @return void
 		 */
-		public function handle($base_url, $status, $action)
+		public function handle($base, $status, $action)
 		{
-			$base_url = rtrim($base_url, '/');
-			$hash     = md5($base_url . $status);
+			$base = rtrim($base, '/');
+			$hash = md5($base . $status);
 
 			if (isset($this->handlers[$hash])) {
 				throw new Flourish\ProgrammerException(
-					'The base URL %s already has a handler registered for status %s.',
-					$base_url,
+					'The base %s already has a handler registered for status %s.',
+					$base,
 					$status
 				);
 			}
 
 			$this->handlers[$hash] = [
-				'base_url' => $base_url ?: '/',
-				'action'   => $action,
-				'status'   => $status
+				'base'   => $base ?: '',
+				'action' => $action,
+				'status' => $status
 			];
 		}
 
@@ -123,12 +123,12 @@
 		/**
 		 *
 		 */
-		public function link($base_url, $route, $action)
+		public function link($base, $route, $action)
 		{
-			$base_url = rtrim($base_url, '/');
+			$base     = rtrim($base, '/');
 			$route    = ltrim($route, '/');
 			$pattern  = $this->parser->regularize(
-				$base_url . '/' . $route,
+				$base . '/' . $route,
 				static::DELIMITER,
 				$params
 			);
@@ -147,9 +147,9 @@
 			}
 
 			$this->links[$pattern] = [
-				'base_url' => $base_url,
-				'action'   => $action,
-				'params'   => $params
+				'base'   => $base,
+				'action' => $action,
+				'params' => $params
 			];
 		}
 
@@ -164,12 +164,12 @@
 		 * @return void
 		 * @throws Flourish\ProgrammerException in the case of conflicting routes
 		 */
-		public function redirect($base_url, $route, $target, $type = 301)
+		public function redirect($base, $route, $target, $type = 301)
 		{
-			$base_url = rtrim($base_url, '/');
-			$route    = ltrim($route, '/');
-			$pattern  = $this->parser->regularize(
-				$base_url . '/' . $route,
+			$base    = rtrim($base, '/');
+			$route   = ltrim($route, '/');
+			$pattern = $this->parser->regularize(
+				$base . '/' . $route,
 				static::DELIMITER,
 				$params
 			);
@@ -189,10 +189,10 @@
 			}
 
 			$this->redirects[$pattern] = [
-				'base_url' => $base_url,
-				'params'   => $params,
-				'target'   => $target,
-				'type'     => $type
+				'base'   => $base,
+				'params' => $params,
+				'target' => $target,
+				'type'   => $type
 			];
 		}
 
@@ -210,7 +210,7 @@
 		/**
 		 * Resolves a URL redirect
 		 */
-		public function resolve(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
+		public function resolve(Transport\Resource\Request $request, Transport\Resource\Response $response, $loose = FALSE)
 		{
 			if (!$this->redirect) {
 				return FALSE;
@@ -250,7 +250,7 @@
 		/**
 		 * Seeks the appropriate action for a given request
 		 */
-		public function seek(HTTP\Resource\Request $request, HTTP\Resource\Response $response, $loose = FALSE)
+		public function seek(Transport\Resource\Request $request, Transport\Resource\Response $response, $loose = FALSE)
 		{
 			if (!$this->link) {
 				return FALSE;
@@ -293,7 +293,7 @@
 		/**
 		 *
 		 */
-		public function wrap(HTTP\Resource\Request $request, HTTP\Resource\Response $response)
+		public function wrap(Transport\Resource\Request $request, Transport\Resource\Response $response)
 		{
 			$candidate_handlers = array();
 			$request_path       = $request->getTarget();
@@ -303,13 +303,13 @@
 					continue;
 				}
 
-				if (strpos($request_path, $handler['base_url']) === 0) {
+				if (strpos($request_path, $handler['base']) === 0) {
 					$candidate_handlers[] = $handler;
 				}
 			}
 
 			usort($candidate_handlers, function($a, $b) {
-				return (strlen($a['base_url']) < strlen($b['base_url'])) ? -1 : 1;
+				return (strlen($a['base']) < strlen($b['base'])) ? -1 : 1;
 			});
 
 			$handler = reset($candidate_handlers);
