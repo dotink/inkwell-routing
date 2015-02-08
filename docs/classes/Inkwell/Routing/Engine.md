@@ -23,13 +23,18 @@ _Please reference the LICENSE.md file at the root of this distribution_
 	</tr>
 	
 	<tr>
-		<td>HTTP</td>
-		<td>Inkwell\HTTP</td>
+		<td>Exception</td>
+		<td>Exception</td>
 	</tr>
 	
 	<tr>
 		<td>Event</td>
 		<td>Inkwell\Event</td>
+	</tr>
+	
+	<tr>
+		<td>Transport</td>
+		<td>Inkwell\Transport</td>
 	</tr>
 	
 	<tr>
@@ -114,12 +119,17 @@ _Please reference the LICENSE.md file at the root of this distribution_
 
 <hr />
 
-#### <span style="color:#3e6a6e;">getCollection()</span>
+#### <span style="color:#3e6a6e;">getEntryAction()</span>
 
 
 <hr />
 
-#### <span style="color:#3e6a6e;">getEntryAction()</span>
+#### <span style="color:#3e6a6e;">isAction()</span>
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">isEntryAction()</span>
 
 
 <hr />
@@ -146,20 +156,197 @@ _Please reference the LICENSE.md file at the root of this distribution_
 
 #### <span style="color:#3e6a6e;">setRestless()</span>
 
+Sets the router to restless mode (will try / and non-/ URLs)
 
-<hr />
+###### Parameters
 
-#### <span style="color:#3e6a6e;">init()</span>
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Type(s)</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+			
+		<tr>
+			<td>
+				$restless
+			</td>
+			<td>
+									<a href="http://www.php.net/language.types.boolean.php">boolean</a>
+				
+			</td>
+			<td>
+				TRUE to try both URL forms, FALSE to only accept what is given
+			</td>
+		</tr>
+			
+	</tbody>
+</table>
+
+###### Returns
+
+<dl>
+	
+		<dt>
+			void
+		</dt>
+		<dd>
+			Provides no return value.
+		</dd>
+	
+</dl>
 
 
 <hr />
 
 #### <span style="color:#3e6a6e;">exec()</span>
 
+Executes a resolved action
+
+##### Details
+
+This function modifies the response directly and should be expected to mutate the
+output based on the action.
+
+###### Parameters
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Type(s)</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+			
+		<tr>
+			<td>
+				$action
+			</td>
+			<td>
+									<a href="http://www.php.net/language.pseudo-types.php">mixed</a>
+				
+			</td>
+			<td>
+				A callable action
+			</td>
+		</tr>
+			
+	</tbody>
+</table>
+
+###### Returns
+
+<dl>
+	
+		<dt>
+			void
+		</dt>
+		<dd>
+			Provides no return value.
+		</dd>
+	
+</dl>
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">mapAction()</span>
+
+Maps an action
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">mapRewrite()</span>
+
 
 <hr />
 
 #### <span style="color:#3e6a6e;">resolve()</span>
+
+Resolve an action using the registered resolver
+
+###### Parameters
+
+<table>
+	<thead>
+		<th>Name</th>
+		<th>Type(s)</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+			
+		<tr>
+			<td>
+				$action
+			</td>
+			<td>
+									<a href="http://www.php.net/language.pseudo-types.php">mixed</a>
+				
+			</td>
+			<td>
+				The unresolved action
+			</td>
+		</tr>
+			
+	</tbody>
+</table>
+
+###### Throws
+
+<dl>
+
+	<dt>
+					Flourish\ProgrammerException		
+	</dt>
+	<dd>
+		If unresolved non-closure is passed without resolver
+	</dd>
+
+</dl>
+
+###### Returns
+
+<dl>
+	
+		<dt>
+			mixed
+		</dt>
+		<dd>
+			The resolved action (a valid callback)
+		</dd>
+	
+</dl>
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">runHandler()</span>
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">runAction()</span>
+
+Runs the current action
+
+##### Details
+
+This will demit when completed causing the action chain to break.
+
+###### Returns
+
+<dl>
+	
+		<dt>
+			void
+		</dt>
+		<dd>
+			Provides no return value.
+		</dd>
+	
+</dl>
 
 
 

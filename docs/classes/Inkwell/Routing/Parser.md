@@ -57,11 +57,20 @@ A list of regex patterns for various pattern tokens
 
 
 
+### Instance Properties
+#### <span style="color:#6a6e3d;">$routeSeparator</span>
+
+
 
 
 ## Methods
 
 ### Instance Methods
+<hr />
+
+#### <span style="color:#3e6a6e;">__construct()</span>
+
+
 <hr />
 
 #### <span style="color:#3e6a6e;">regularize()</span>

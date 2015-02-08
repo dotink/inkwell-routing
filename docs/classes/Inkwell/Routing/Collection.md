@@ -23,8 +23,8 @@ _Please reference the LICENSE.md file at the root of this distribution_
 	</tr>
 	
 	<tr>
-		<td>HTTP</td>
-		<td>Inkwell\HTTP</td>
+		<td>Transport</td>
+		<td>Inkwell\Transport</td>
 	</tr>
 	
 </table>
@@ -80,6 +80,11 @@ _Please reference the LICENSE.md file at the root of this distribution_
 
 <hr />
 
+#### <span style="color:#3e6a6e;">base()</span>
+
+
+<hr />
+
 #### <span style="color:#3e6a6e;">getCompiler()</span>
 
 
@@ -106,14 +111,14 @@ Handles an error with an action in the routes collection
 			
 		<tr>
 			<td>
-				$base_url
+				$base
 			</td>
 			<td>
 									<a href="http://www.php.net/language.types.string.php">string</a>
 				
 			</td>
 			<td>
-				The base path for all the routes
+				The base for all the routes
 			</td>
 		</tr>
 					
@@ -126,7 +131,7 @@ Handles an error with an action in the routes collection
 				
 			</td>
 			<td>
-				The status string (see HTTP namespace)
+				The status string
 			</td>
 		</tr>
 					
@@ -259,10 +264,19 @@ Redirects a route to a translation in the routes collection
 
 #### <span style="color:#3e6a6e;">resolve()</span>
 
+Resolves a URL redirect
+
 
 <hr />
 
 #### <span style="color:#3e6a6e;">seek()</span>
+
+Seeks the appropriate action for a given request
+
+
+<hr />
+
+#### <span style="color:#3e6a6e;">wrap()</span>
 
 
 <hr />
