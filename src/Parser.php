@@ -38,9 +38,27 @@
 		/**
 		 *
 		 */
+		private $routeSeparator = NULL;
+
+
+		/**
+		 *
+		 */
+		public function __construct($route_separator = NULL)
+		{
+			$this->routeSeparator = $route_separator;
+		}
+
+
+		/**
+		 *
+		 */
 		public function regularize($route, $regex_delimiter, &$params = NULL)
 		{
 			$params = array();
+			$route  = $this->routeSeparator && $this->routeSeparator != '/'
+				? str_replace('/', $this->routeSeparator, $route)
+				: $route;
 
 			if (preg_match_all(static::REGEX_TOKEN, $route, $matches)) {
 				foreach ($matches[0] as $i => $token) {

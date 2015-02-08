@@ -1,10 +1,10 @@
 <?php namespace Inkwell\Routing
 {
-	use Dotink\Flourish;
-	use Inkwell\HTTP;
-
 	/**
-	 * Collection class responsible for aggregating and mapping routes to actions
+	 * Simple proxy to group Collection calls under a common base
+	 *
+	 * This is a proxy class which calls certain methods on the Collection class using a store
+	 * and common base with each call reducing the need to repeat the base in manual configuration.
 	 *
 	 * @copyright Copyright (c) 2015, Matthew J. Sahagian
 	 * @author Matthew J. Sahagian [mjs] <msahagian@dotink.org>
@@ -16,7 +16,12 @@
 	class BaseGroup
 	{
 		/**
+		 * Create a new BaseGroup
 		 *
+		 * @access public
+		 * @param Collection $collection The collection we'll be adding to
+		 * @param string $base The base route which added handlers, links, and redirects are under
+		 * @return void
 		 */
 		public function __construct(Collection $collection, $base)
 		{
@@ -26,7 +31,12 @@
 
 
 		/**
+		 * Add and error handler to the collection
 		 *
+		 * @access public
+		 * @param string $status The status response to match
+		 * @param mixed $action A resolvable action for the registered resolver
+		 * @return BaseGroup The called instance for method chaining
 		 */
 		public function handle($status, $action)
 		{
@@ -37,7 +47,12 @@
 
 
 		/**
+		 * Add a link between a route and a particular action to the collection
 		 *
+		 * @access public
+		 * @param string $route The route to match
+		 * @param mixed $action A resolvable action for the registered resolver
+		 * @return BaseGroup The called instance for method chaining
 		 */
 		public function link($route, $action)
 		{
@@ -48,7 +63,13 @@
 
 
 		/**
+		 * Add a redirect between a route and a new target
 		 *
+		 * @access public
+		 * @param string $route The route to match
+		 * @param string $target The new route to seek out
+		 * @param integer $type The type of redirection by code
+		 * @return BaseGroup The called instance for method chaining
 		 */
 		public function redirect($route, $target, $type = 301)
 		{
