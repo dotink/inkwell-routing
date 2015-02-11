@@ -2,9 +2,11 @@
 {
 	use Closure;
 	use Exception;
-	use Inkwell\Event;
-	use Inkwell\Transport;
 	use Dotink\Flourish;
+
+	use Inkwell\Event;
+	use Inkwell\Transport\Resource\Request;
+	use Inkwell\Transport\Resource\Response;
 
 	/**
 	 * The main routing engine which runs routing operations over a collection
@@ -65,10 +67,10 @@
 		/**
 		 *
 		 */
-		public function __construct(Collection $collection, Transport\Resource\Response $response)
+		public function __construct(Collection $collection = NULL, Response $response = NULL)
 		{
-			$this->collection = $collection;
-			$this->response   = $response;
+			$this->collection = $collection ?: new Collection();
+			$this->response   = $response   ?: new Response();
 		}
 
 
@@ -192,7 +194,7 @@
 		/**
 		 *
 		 */
-		public function run(Transport\Resource\Request $request, ResolverInterface $resolver = NULL)
+		public function run(Request $request, ResolverInterface $resolver = NULL)
 		{
 			$this->request  = $request;
 			$this->resolver = $resolver;
@@ -303,7 +305,7 @@
 
 				if ($output && $this->mutable) {
 					$this->response->set($output);
-				} elseif (!($response instanceof Transport\Resource\Response)) {
+				} elseif (!($response instanceof Response)) {
 					$this->response->set($response);
 				} else {
 					$this->response = $response;

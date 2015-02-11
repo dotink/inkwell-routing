@@ -1,10 +1,13 @@
 <?php
 
 	return Affinity\Action::create(['core', 'http'], function($app, $broker) {
+
 		$collection = $broker->make('Inkwell\Routing\Collection');
 		$router     = $broker->make('Inkwell\Routing\Engine', [
 			':collection' => $collection,
-			':response'   => $app['response']
+			':response'   => isset($app['response'])
+				? $app['response']
+				: NULL
 		]);
 
 		$router->setMutable($app['engine']->fetch('routing',  'mutable',  TRUE));
