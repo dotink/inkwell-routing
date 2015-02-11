@@ -1,4 +1,5 @@
 <?php
+	use Inkwell\HTML\html;
 
 	return Affinity\Action::create(['core', 'http'], function($app, $broker) {
 
@@ -50,7 +51,7 @@
 		}
 
 		if (class_exists('Inkwell\HTML\html')) {
-			Inkwell\HTML\html::add(['anchor' => new Inkwell\Routing\HTML\anchor($router)]);
+			html::add(['anchor' => new Inkwell\Routing\HTML\anchor($router)]);
 		}
 
 		$app['router']            = $router;

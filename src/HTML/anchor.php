@@ -1,5 +1,7 @@
 <?php namespace Inkwell\Routing\HTML
 {
+	use Inkwell\HTML\html;
+
 	class anchor
 	{
 		/**
