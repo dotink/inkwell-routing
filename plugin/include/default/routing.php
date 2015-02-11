@@ -50,7 +50,7 @@
 		}
 
 		if (class_exists('Inkwell\HTML\html')) {
-			Inkwell\HTML\html::add(['anchor' => new Inkwell\HTML\anchor($router)]);
+			Inkwell\HTML\html::add(['anchor' => new Inkwell\Routing\HTML\anchor($router)]);
 		}
 
 		$app['router']            = $router;

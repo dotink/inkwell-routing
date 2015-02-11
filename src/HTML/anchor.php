@@ -1,4 +1,4 @@
-<?php namespace Inkwell\HTML
+<?php namespace Inkwell\Routing\HTML
 {
 	class anchor
 	{
