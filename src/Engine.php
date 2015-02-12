@@ -248,12 +248,19 @@
 					// No viable response was found, attempt to run handlers
 					//
 
-					if ($this->collection->wrap($this->request, $this->response)) {
+					while ($this->collection->wrap($this->request, $this->response)) {
 						try {
 							$this->runHandler();
+							break;
+
 						} catch (Exception $e) {
-							$this->response->setStatusCode(500);
-							$this->response->set(NULL);
+							if (!$this->response->checkStatusCode(500)) {
+								$this->response->setStatusCode(500);
+								$this->response->set(NULL);
+								continue;
+							}
+
+							throw $e;
 						}
 					}
 				}
