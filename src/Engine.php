@@ -107,6 +107,10 @@
 		 */
 		public function defer($message = NULL)
 		{
+			if (func_num_args()) {
+				$this->response->set($message);
+			}
+
 			throw new Flourish\ContinueException($message);
 		}
 
