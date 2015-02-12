@@ -9,58 +9,56 @@
 
 	try {
 
-		call_user_func(function() {
+		//
+		// Track backwards until we discover our includes directory.  The only file required
+		// to be in place for this is includes/init.php which should return our application
+		// instance.
+		//
+
+		for (
 
 			//
-			// Track backwards until we discover our includes directory.  The only file required
-			// to be in place for this is includes/init.php which should return our application
-			// instance.
+			// Initial assignment
 			//
 
-			for (
+			$init_path = __DIR__;
+
+			//
+			// While Condition
+			//
+
+			$init_path && !is_file($init_path . DIRECTORY_SEPARATOR . 'init.php');
+
+			//
+			// Modifier
+			//
+
+			$init_path = realpath($init_path . DIRECTORY_SEPARATOR . '..')
+		);
+
+
+		$app = include($init_path . DIRECTORY_SEPARATOR . 'init.php');
+
+		$app->run(function($app, $broker) {
+			$app['gateway']->transport(
 
 				//
-				// Initial assignment
+				// Running the router will return the response for transport
 				//
 
-				$init_path = 'init.php';
-
-				//
-				// While Condition
-				//
-
-				!is_file($init_path);
-
-				//
-				// Modifier
-				//
-
-				$init_path = realpath('..' . DIRECTORY_SEPARATOR . $init_path)
+				$app['response'] = $app['router']->run($app['request'], $app['router.resolver'])
 			);
-
-			$app = include($init_path);
-
-			$app->run(function($app, $broker) {
-				$app['gateway']->transport(
-
-					//
-					// Running the router will return the response for transport
-					//
-
-					$app['response'] = $app['router']->run($app['request'], $app['router.resolver'])
-				);
-			});
 		});
 
 	} catch (Exception $e) {
 
-		//
-		// Panic here, attempt to determine what state we're in, see if some errors handlers are
-		// callable or if we're totally fucked.  In the end, throw the exception and be damned.
-		//
+		if ($app->checkExecutionMode(IW\EXEC_MODE\PRODUCTION)) {
+			header('HTTP/1.1 500 Internal Server Error');
+			echo 'Something has gone terribly wrong.';
+			exit(-1);
+		}
 
 		throw $e;
-
-		exit(0);
+		exit(-1);
 	}
 }
