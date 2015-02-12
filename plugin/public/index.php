@@ -21,15 +21,20 @@
 			$init_path  = realpath($init_path . DIRECTORY_SEPARATOR . '..')
 		);
 
-		$app = include($init_path . DIRECTORY_SEPARATOR . 'init.php');
+		if ($app = @include($init_path . DIRECTORY_SEPARATOR . 'init.php')) {
 
-		$app->run(function($app, $broker) {
-			$router   = $app['router'];
-			$request  = $app['request'];
-			$resolver = $app['router.resolver'];
+			//
+			// We've got an application instance so let's run!
+			//
 
-			exit($app['gateway']->transport($router->run($request, $resolver)));
-		});
+			$app->run(function($app, $broker) {
+				$router   = $app['router'];
+				$request  = $app['request'];
+				$resolver = $app['router.resolver'];
+
+				exit($app['gateway']->transport($router->run($request, $resolver)));
+			});
+		}
 
 	} catch (Exception $e) {
 		if (!$app->checkExecutionMode(IW\EXEC_MODE\PRODUCTION)) {
