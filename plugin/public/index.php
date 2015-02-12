@@ -16,49 +16,29 @@
 		//
 
 		for (
-
-			//
-			// Initial assignment
-			//
-
-			$init_path = __DIR__;
-
-			//
-			// While Condition
-			//
-
-			$init_path && !is_file($init_path . DIRECTORY_SEPARATOR . 'init.php');
-
-			//
-			// Modifier
-			//
-
-			$init_path = realpath($init_path . DIRECTORY_SEPARATOR . '..')
+			$init_path  = __DIR__;
+			$init_path != '/' && !is_file($init_path . DIRECTORY_SEPARATOR . 'init.php');
+			$init_path  = realpath($init_path . DIRECTORY_SEPARATOR . '..')
 		);
-
 
 		$app = include($init_path . DIRECTORY_SEPARATOR . 'init.php');
 
 		$app->run(function($app, $broker) {
-			$app['gateway']->transport(
+			$router   = $app['router'];
+			$request  = $app['request'];
+			$resolver = $app['router.resolver'];
 
-				//
-				// Running the router will return the response for transport
-				//
-
-				$app['response'] = $app['router']->run($app['request'], $app['router.resolver'])
-			);
+			exit($app['gateway']->transport($router->run($request, $resolver)));
 		});
 
 	} catch (Exception $e) {
-
-		if ($app->checkExecutionMode(IW\EXEC_MODE\PRODUCTION)) {
-			header('HTTP/1.1 500 Internal Server Error');
-			echo 'Something has gone terribly wrong.';
+		if (!$app->checkExecutionMode(IW\EXEC_MODE\PRODUCTION)) {
+			throw $e;
 			exit(-1);
 		}
-
-		throw $e;
-		exit(-1);
 	}
+
+	header('HTTP/1.1 500 Internal Server Error');
+	echo 'Something has gone terribly wrong.';
+	exit(-1);
 }
