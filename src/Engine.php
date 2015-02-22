@@ -32,7 +32,10 @@
 
 
 		/**
+		 * The routes collection
 		 *
+		 * @access private
+		 * @var Collection
 		 */
 		private $collection = NULL;
 
