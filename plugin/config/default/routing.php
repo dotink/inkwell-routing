@@ -39,7 +39,6 @@
 				'Inkwell\Routing\ParserInterface'   => 'Inkwell\Routing\Parser',
 				'Inkwell\Routing\CompilerInterface' => 'Inkwell\Routing\Compiler'
 			]
-
 		],
 
 		//
