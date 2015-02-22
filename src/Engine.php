@@ -171,8 +171,13 @@
 		{
 			$location = $this->request->getURL()->modify($location);
 
-			$this->response->setStatusCode($type);
 			$this->response->headers->set('Location', $location);
+
+			if (is_int($type)) {
+				$this->response->setStatusCode($type);
+			} else {
+				$this->response->setStatus((string) $type);
+			}
 
 			if ($demit) {
 				$this->demit();
