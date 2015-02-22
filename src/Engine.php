@@ -23,7 +23,10 @@
 		use Event\Emitter;
 
 		/**
+		 * The action execution stack starting with the entry action, ending with the current
 		 *
+		 * @access private
+		 * @var array
 		 */
 		private $actions = array();
 
