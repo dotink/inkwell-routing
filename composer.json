@@ -1,6 +1,6 @@
 {
 	"name": "dotink/inkwell-routing",
-	"description": "Route incoming requests to various callbacks or directly to files",
+	"description": "The inKWell Router",
 	"keywords": ["router"],
 	"license": "AGPL-3.0",
 	"type": "opus-package",
