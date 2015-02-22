@@ -19,7 +19,7 @@
 		'restless' => TRUE,
 
 		//
-		// The default word separator for translated url components
+		// The default word separator for url components
 		//
 
 		'word_separator' => '-',
