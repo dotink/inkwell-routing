@@ -5,7 +5,9 @@
 	return Affinity\Config::create(['providers', 'routes'], [
 
 		//
-		// Whether or not we allow action output to override returned value
+		// Whether or not we allow action output to override returned value.  This means that
+		// you can `echo` or `var_dump` inside a routed action and instead of using the returned
+		// value from the action, any output generated will be the content of the response.
 		//
 
 		'mutable' => TRUE,
