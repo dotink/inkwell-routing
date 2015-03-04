@@ -113,7 +113,9 @@
 		 */
 		public function defer($message = NULL)
 		{
-			if (func_num_args()) {
+			if (!func_num_args()) {
+				$this->response->set(NULL);
+			} elseif ($message) {
 				$this->response->set($message);
 			}
 
@@ -126,7 +128,9 @@
 		 */
 		public function demit($message = NULL)
 		{
-			if (func_num_args()) {
+			if (!func_num_args()) {
+				$this->response->set(NULL);
+			} elseif ($message) {
 				$this->response->set($message);
 			}
 
@@ -228,10 +232,11 @@
 			while ($this->collection->resolve($this->request, $this->response, $this->restless)) {
 				try {
 					$this->mapRewrite();
+				} catch (Flourish\ContinueException $e) {
+					$this->response->setStatusCode(404);
+					continue;
 				} catch (Flourish\YieldException $e) {
 					break;
-				} catch (Flourish\ContinueException $e) {
-					continue;
 				}
 			}
 
@@ -246,10 +251,11 @@
 					try {
 						$this->mapAction();
 						$this->runAction();
+					} catch (Flourish\ContinueException $e) {
+						$this->response->setStatusCode(404);
+						continue;
 					} catch (Flourish\YieldException $e) {
 						break;
-					} catch (Flourish\ContinueException $e) {
-						continue;
 					}
 				}
 
@@ -332,6 +338,7 @@
 				} else {
 					$this->response = $response;
 				}
+
 			}
 		}
 
@@ -370,7 +377,7 @@
 
 				$this->response->headers->set('Location', $location);
 
-				$this->demit(NULL);
+				$this->demit();
 			}
 		}
 
@@ -432,7 +439,7 @@
 				'response' => $this->response
 			]);
 
-			$this->demit();
+			$this->demit(NULL);
 		}
 	}
 }
