@@ -19,8 +19,8 @@
 	],
 	"require": {
 		"php": ">=5.4.0",
-		"imarc/opus": "dev-master",
-		"dotink/flourish-core": "dev-master",
+		"imarc/opus": "^1.0.0",
+		"dotink/flourish-core": "^1.0.0",
 		"dotink/inkwell-http": "dev-master",
 		"dotink/inkwell-events": "dev-master"
 	},
