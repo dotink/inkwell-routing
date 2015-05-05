@@ -13,17 +13,29 @@
 	interface ResolverInterface
 	{
 		/**
-		 * Resolves executable actions and references
+		 * Execute a resolved action
 		 *
-		 * The returned reference should be in the form of an array with the first element
-		 * representing a specific callable action.  This should be in the form of a valid
-		 * callback which is executable by calling `$action()` alone.  This allows for
-		 * closures, invoke-able classes, function names (as strings), etc.
+		 * @access public
+		 * @param mixed $action The reference for the callable action
+		 * @return mixed The result of the action being executed
+		 */
+		public function execute($action);
+
+
+		/**
+		 * Resolves action references
+		 *
+		 * The returned result should be a reference to the action which can be checked against
+		 * the router's action stack.  Generally, the returned result is a valid callback with
+		 * preparation work having been done.
+		 *
+		 * When the action needs to be executed, the reference will be passed to execute()
+		 * on the resolver.
 		 *
 		 * @access public
 		 * @param mixed $action A callable or callable representation of the action
 		 * @param array $context An array of context information
-		 * @return array An action reference
+		 * @return mixed An action reference executable via execute()
 		 */
 		public function resolve($action, Array $context);
 	}

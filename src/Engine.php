@@ -324,11 +324,11 @@
 		 * @param mixed $action A callable action
 		 * @return void
 		 */
-		protected function exec($action)
+		protected function execute($action)
 		{
 			if ($action) {
 				ob_start();
-				$response = $action();
+				$response = $this->resolver->execute($action);
 				$output   = ob_get_clean();
 
 				if ($output && $this->mutable) {
@@ -338,7 +338,6 @@
 				} else {
 					$this->response = $response;
 				}
-
 			}
 		}
 
@@ -414,7 +413,7 @@
 		 */
 		public function runHandler()
 		{
-			$this->exec($this->resolve($this->response->get()));
+			$this->execute($this->resolve($this->response->get()));
 		}
 
 
@@ -432,7 +431,7 @@
 				'response' => $this->response
 			]);
 
-			$this->exec($this->getAction());
+			$this->execute($this->getAction());
 
 			$this->emit('Router::actionComplete', [
 				'request'  => $this->request,
