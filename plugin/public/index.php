@@ -27,13 +27,7 @@
 			// We've got an application instance so let's run!
 			//
 
-			$app->run(function($app, $broker) {
-				$router   = $app['router'];
-				$request  = $app['request'];
-				$resolver = $app['router.resolver'];
-
-				exit($app['gateway']->transport($router->run($request, $resolver)));
-			});
+			exit($app->run());
 		}
 
 	} catch (Exception $e) {
