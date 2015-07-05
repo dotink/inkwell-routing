@@ -73,10 +73,10 @@
 		/**
 		 *
 		 */
-		public function __construct(Collection $collection = NULL, Response $response = NULL)
+		public function __construct(Collection $collection = NULL, ResolverInterface $resolver = NULL)
 		{
 			$this->collection = $collection ?: new Collection();
-			$this->response   = $response   ?: new Response();
+			$this->resolver   = $resolver;
 		}
 
 
@@ -213,10 +213,10 @@
 		/**
 		 *
 		 */
-		public function run(Request $request, ResolverInterface $resolver = NULL)
+		public function run(Request $request, Response $response = NULL)
 		{
+			$this->response = $response ?: new Response();
 			$this->request  = $request;
-			$this->resolver = $resolver;
 
 			$this->collection->reset();
 

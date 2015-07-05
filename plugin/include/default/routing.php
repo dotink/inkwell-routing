@@ -1,13 +1,13 @@
 <?php
 	use Inkwell\HTML\html;
 
-	return Affinity\Action::create(['core', 'http'], function($app, $broker) {
+	return Affinity\Action::create(['core', 'http', 'controller'], function($app, $broker) {
 
 		$collection = $broker->make('Inkwell\Routing\Collection');
 		$router     = $broker->make('Inkwell\Routing\Engine', [
 			':collection' => $collection,
-			':response'   => isset($app['response'])
-				? $app['response']
+			':resolver'   => isset($app['router.resolver'])
+				? $app['router.resolver']
 				: NULL
 		]);
 
@@ -56,5 +56,10 @@
 
 		$app['router']            = $router;
 		$app['router.collection'] = $collection;
-		$app['router.resolver']   = NULL;
+		$app['engine.handler']    = function($app, $broker) {
+			return $app['gateway']->transport($app['router']->run(
+				$app['request'],
+				$app['response']
+			));
+		};
 	});
