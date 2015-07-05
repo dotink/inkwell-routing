@@ -179,7 +179,7 @@
 		 */
 		public function redirect($location, $type = 303, $demit = TRUE)
 		{
-			$location = $this->request->getURL()->modify($location);
+			$location = $this->request->getURI()->modify($location);
 
 			$this->response->headers->set('Location', $location);
 
@@ -200,7 +200,7 @@
 		 */
 		public function rewrite($location, $defer = TRUE)
 		{
-			$location = $this->request->getURL()->modify($location);
+			$location = $this->request->getURI()->modify($location);
 
 			$this->request->setURL($location);
 
@@ -372,7 +372,7 @@
 
 			} else {
 				$target   = $this->response->get();
-				$location = $this->request->getURL()->modify($target);
+				$location = $this->request->getURI()->modify($target);
 
 				$this->response->headers->set('Location', $location);
 
