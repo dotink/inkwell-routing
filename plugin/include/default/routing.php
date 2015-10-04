@@ -3,9 +3,9 @@
 
 	return Affinity\Action::create(['core', 'http', 'controller'], function($app, $broker) {
 
-		$collection = $broker->make('Inkwell\Routing\Collection');
-		$router     = $broker->make('Inkwell\Routing\Engine', [
-			':collection' => $collection,
+		$routes = $broker->make('Inkwell\Routing\Collection');
+		$router = $broker->make('Inkwell\Routing\Engine', [
+			':collection' => $routes,
 			':resolver'   => isset($app['router.resolver'])
 				? $app['router.resolver']
 				: NULL
@@ -13,6 +13,18 @@
 
 		$router->setMutable($app['engine']->fetch('routing',  'mutable',  TRUE));
 		$router->setRestless($app['engine']->fetch('routing', 'restless', TRUE));
+
+		//
+		// We register as the application engine
+		//
+
+		$app['engine.handler'] = function($app, $broker) use ($router){
+			return $app['gateway']->transport($router->run($app['request'], $app['response']));
+		};
+
+		//
+		// Add all our routes
+		//
 
 		foreach ($app['engine']->fetch('@routes', 'base_url') as $id => $base_url) {
 
@@ -25,7 +37,7 @@
 			//
 
 			foreach ($links as $route => $action) {
-				$collection->link($base_url, $route, $action);
+				$routes->link($base_url, $route, $action);
 			}
 
 
@@ -35,7 +47,7 @@
 
 			foreach ($redirects as $type => $type_redirects) {
 				foreach ($type_redirects as $route => $target) {
-					$collection->redirect($base_url, $route, $target, $type);
+					$routes->redirect($base_url, $route, $target, $type);
 				}
 			}
 
@@ -45,7 +57,7 @@
 			//
 
 			foreach ($handlers as $status => $action) {
-				$collection->handle($base_url, $status, $action);
+				$routes->handle($base_url, $status, $action);
 			}
 
 		}
@@ -54,12 +66,11 @@
 			html::add(['anchor' => new Inkwell\Routing\HTML\anchor($router)]);
 		}
 
-		$app['router']            = $router;
-		$app['router.collection'] = $collection;
-		$app['engine.handler']    = function($app, $broker) {
-			return $app['gateway']->transport($app['router']->run(
-				$app['request'],
-				$app['response']
-			));
-		};
+		//
+		// Set our container aliases
+		//
+
+		$app['routes']          = $routes;
+		$app['router']          = $router;
+		$app['router.resolver'] = NULL;
 	});
