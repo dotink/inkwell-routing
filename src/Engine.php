@@ -179,7 +179,9 @@
 		 */
 		public function redirect($location, $type = 303, $demit = TRUE)
 		{
-			$location = $this->request->getURI()->modify($location);
+			$location = $location
+				? $this->request->getURI()->modify($location)
+				: $this->request->getURI();
 
 			$this->response->headers->set('Location', $location);
 
