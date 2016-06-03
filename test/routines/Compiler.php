@@ -8,9 +8,9 @@
 		 */
 		'setup' => function($data, $shared)
 		{
+			needs($data['root'] . '/src/Interfaces/CompilerInterface.php');
 			needs($data['root'] . '/src/Compiler.php');
 		},
-
 
 		/**
 		 *
@@ -48,7 +48,7 @@
 					-> using  ($shared->compiler)
 					-> with   ('foo-bar')
 					-> equals ('fooBar')
-				;				
+				;
 			},
 
 
@@ -61,7 +61,7 @@
 					-> using  ($shared->compiler)
 					-> with   ('foo-bar')
 					-> equals ('foo_bar')
-				;				
+				;
 			},
 
 
@@ -81,7 +81,7 @@
 
 					-> with   ('AreYouGoing-to-Scarborough fair... (with me?)')
 					-> equals ('are-you-going-to-scarborough-fair-with-me')
-				;				
+				;
 			},
 
 

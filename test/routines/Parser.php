@@ -8,6 +8,7 @@
 		 */
 		'setup' => function($data, $shared)
 		{
+			needs($data['root'] . '/src/Interfaces/ParserInterface.php');
 			needs($data['root'] . '/src/Parser.php');
 		},
 
