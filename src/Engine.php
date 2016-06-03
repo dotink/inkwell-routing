@@ -43,12 +43,6 @@
 		/**
 		 *
 		 */
-		private $params = array();
-
-
-		/**
-		 *
-		 */
 		private $response = NULL;
 
 
@@ -330,17 +324,24 @@
 		{
 			if ($action) {
 				ob_start();
-				$response = $this->resolver->execute($action);
-				$output   = ob_get_clean();
 
-				if ($output && $this->mutable) {
+				$response = $this->resolver
+					? $this->resolver->execute($action)
+					: $action();
+
+				if (($output = ob_get_clean()) && $this->mutable) {
 					$this->response->set($output);
 				} elseif (!($response instanceof Response)) {
 					$this->response->set($response);
 				} else {
 					$this->response = $response;
 				}
+
+				return TRUE;
 			}
+
+
+			return FALSE;
 		}
 
 
@@ -415,7 +416,8 @@
 		 */
 		public function runHandler()
 		{
-			$this->execute($this->resolve($this->response->get()));
+			$action = $this->resolve($this->response->get());
+			$result = $this->execute($action);
 		}
 
 
@@ -433,7 +435,8 @@
 				'response' => $this->response
 			]);
 
-			$this->execute($this->getAction());
+			$action = $this->getAction();
+			$result = $this->execute($action);
 
 			$this->emit('Router::actionComplete', [
 				'request'  => $this->request,
