@@ -9,8 +9,13 @@
 		 */
 		'setup' => function($data, $shared)
 		{
-			Mime::define('Inkwell\Routing\Parser');
-			Mime::define('Inkwell\Routing\Compiler');
+			Mime::define('Inkwell\Routing\Parser')
+				->implementing('Inkwell\Routing\ParserInterface')
+			;
+
+			Mime::define('Inkwell\Routing\Compiler')
+				->implementing('Inkwell\Routing\CompilerInterface')
+			;
 
 			$shared->parser    = Mime::create('Inkwell\Routing\Parser');
 			$shared->pcompiler = Mime::create('Inkwell\Routing\Compiler');
