@@ -7,9 +7,6 @@
 
 	return [
 
-		/**
-		 *
-		 */
 		'tests' => [
 
 			/**
@@ -19,7 +16,7 @@
 			{
 				$dir       = new RecursiveDirectoryIterator(getcwd());
 				$ite       = new RecursiveIteratorIterator($dir);
-				$files     = new RegexIterator($ite, '#(?:.*)\.php$#', RegexIterator::GET_MATCH);
+				$files     = new RegexIterator($ite, '#^.*\.php$#', RegexIterator::GET_MATCH);
 				$file_list = array();
 
 				foreach ($files as $file) {
@@ -28,6 +25,10 @@
 
 				foreach ($file_list as $file) {
 					$output = [];
+
+					if (strpos($file, $data['root'] . '/vendor') === 0) {
+						continue;
+					}
 
 					exec(sprintf('%s -l %s 2>&1', PHP_BINARY, escapeshellarg($file)), $output);
 
