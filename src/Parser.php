@@ -72,11 +72,16 @@
 					$split_pos = strrpos($token, ':');
 
 					if ($split_pos !== FALSE) {
-						$params[] = trim(substr($token, $split_pos + 1, -1));
-						$pattern  = trim(substr($token, 1, $split_pos - 1));
+						$param   = trim(substr($token, $split_pos + 1, -1));
+						$pattern = trim(substr($token, 1, $split_pos - 1));
+
+						if (!is_numeric($param)) {
+							$params[] = $param;
+						}
+
 					} else {
-						$params[] = $i;
-						$pattern  = trim(substr($token, 1, -1));
+						$params[] = trim(substr($token, 1, -1));
+						$pattern  = '!';
 					}
 
 					$route = $this->replaceHolder($i, $pattern, $route);
